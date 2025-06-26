@@ -228,7 +228,7 @@ onMounted(async () => {
     startTime.value = Date.now()
   }
 
-  monitoringInterval.value = window.setInterval(checkServiceHealth, 2000)
+  monitoringInterval.value = window.setInterval(checkServiceHealth, (store.settings.app.monitor_interval || 5) * 1000)
   window.addEventListener('resize', updateChartSize)
 })
 

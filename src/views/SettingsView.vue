@@ -3,18 +3,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslation } from '../composables/useI18n'
-import {
-  Settings,
-  Server,
-  HardDrive,
-  Save,
-  RotateCcw,
-  AlertCircle,
-  CheckCircle,
-  Plus,
-  Trash2,
-  Play
-} from 'lucide-vue-next'
+import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, Play } from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 
 const store = useAppStore()
@@ -75,7 +64,6 @@ onMounted(async () => {
   if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
 
   if (!rcloneSettings.config) rcloneSettings.config = {}
-  if (!rcloneSettings.flags) rcloneSettings.flags = []
   if (rcloneSettings.auto_mount === undefined) rcloneSettings.auto_mount = false
 
   rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
@@ -157,14 +145,6 @@ const handleReset = async () => {
     message.value = t('settings.resetFailed')
     messageType.value = 'error'
   }
-}
-
-const addRcloneFlag = () => {
-  rcloneSettings.flags.push('')
-}
-
-const removeRcloneFlag = (index: number) => {
-  rcloneSettings.flags.splice(index, 1)
 }
 </script>
 
@@ -286,28 +266,6 @@ const removeRcloneFlag = (index: number) => {
           </div>
         </div>
 
-        <div class="settings-section">
-          <h2>{{ t('settings.rclone.flags.title') }}</h2>
-          <p>{{ t('settings.rclone.flags.subtitle') }}</p>
-
-          <div class="flags-container">
-            <div v-for="(_, index) in rcloneSettings.flags" :key="index" class="flag-item">
-              <input
-                v-model="rcloneSettings.flags[index]"
-                type="text"
-                class="form-input"
-                :placeholder="t('settings.rclone.flags.placeholder')"
-              />
-              <button @click="removeRcloneFlag(index)" class="remove-btn">
-                <Trash2 :size="16" />
-              </button>
-            </div>
-            <button @click="addRcloneFlag" class="add-flag-btn">
-              <Plus :size="16" />
-              {{ t('settings.rclone.flags.add') }}
-            </button>
-          </div>
-        </div>
         <div class="settings-section">
           <h2>{{ t('settings.rclone.config.title') }}</h2>
           <p>{{ t('settings.rclone.config.subtitle') }}</p>

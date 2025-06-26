@@ -260,7 +260,10 @@ const saveSettings = async () => {
 
 onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
-  statusCheckInterval = window.setInterval(rcloneStore.checkRcloneBackendStatus, 30000)
+  statusCheckInterval = window.setInterval(
+    rcloneStore.checkRcloneBackendStatus,
+    (store.settings.app.monitor_interval || 5) * 1000
+  )
 })
 
 onUnmounted(() => {

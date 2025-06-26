@@ -327,7 +327,7 @@ onMounted(async () => {
         await scrollToBottom()
       }
     }
-  }, 2000)
+  }, (store.settings.app.monitor_interval || 5) * 1000)
 })
 
 onUnmounted(() => {

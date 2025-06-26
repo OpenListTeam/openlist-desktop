@@ -197,17 +197,13 @@ const deleteConfig = async (config: RcloneFormConfig) => {
   }
 }
 
-const refreshMounts = async () => {
-  try {
-    await store.loadMountInfos()
-  } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToRefresh'))
-  }
-}
-
 const startBackend = async () => {
   try {
     await rcloneStore.startRcloneBackend()
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await rcloneStore.checkRcloneBackendStatus()
+    await store.loadRemoteConfigs()
+    await store.loadMountInfos()
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToStartService'))
   }
@@ -272,7 +268,8 @@ const handleKeydown = (event: KeyboardEvent) => {
     addNewConfig()
   } else if (ctrl && key === 'r') {
     event.preventDefault()
-    refreshMounts()
+    store.loadRemoteConfigs()
+    store.loadMountInfos()
   } else if (key === 'Escape') {
     event.preventDefault()
     if (showAddForm.value) {
@@ -304,11 +301,11 @@ onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
   await rcloneStore.checkRcloneBackendStatus()
   await store.loadRemoteConfigs()
-  await refreshMounts()
-  mountRefreshInterval = setInterval(refreshMounts, 15000)
+  await store.loadMountInfos()
+  mountRefreshInterval = setInterval(store.loadMountInfos, (store.settings.app.monitor_interval || 5) * 1000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()
-  }, 5000)
+  }, (store.settings.app.monitor_interval || 5) * 1000)
   await rcloneStore.init()
 })
 
@@ -396,7 +393,7 @@ onUnmounted(() => {
           <option value="unmounted">{{ t('mount.status.unmounted') }}</option>
           <option value="error">{{ t('mount.status.error') }}</option>
         </select>
-        <button @click="refreshMounts" class="refresh-btn" :disabled="rcloneStore.loading">
+        <button @click="store.loadMountInfos" class="refresh-btn" :disabled="rcloneStore.loading">
           <RefreshCw class="refresh-icon" :class="{ spinning: rcloneStore.loading }" />
         </button>
       </div>

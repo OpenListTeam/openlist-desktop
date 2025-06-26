@@ -7,7 +7,6 @@ export interface OpenListCoreConfig {
 
 export interface RcloneConfig {
   config?: any // Flexible JSON object for rclone configuration
-  flags: string[]
   auto_mount: boolean
 }
 
