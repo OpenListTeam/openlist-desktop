@@ -6,16 +6,49 @@ use crate::cmd::http_api::{get_process_list, start_process, stop_process};
 use crate::object::structs::{AppState, FileItem};
 use crate::utils::path::{get_openlist_binary_path, get_rclone_binary_path};
 
+fn normalize_path(path: &str) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        let normalized = path.replace('/', "\\");
+        if normalized.len() == 2 && normalized.chars().nth(1) == Some(':') {
+            format!("{}\\", normalized)
+        } else if normalized.len() > 2
+            && normalized.chars().nth(1) == Some(':')
+            && normalized.chars().nth(2) != Some('\\')
+        {
+            let drive = &normalized[..2];
+            let rest = &normalized[2..];
+            format!("{}\\{}", drive, rest)
+        } else {
+            normalized
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        path.to_string()
+    }
+}
+
 #[tauri::command]
 pub async fn open_folder(path: String) -> Result<bool, String> {
-    let path_buf = PathBuf::from(path);
+    let normalized_path = normalize_path(&path);
+    let path_buf = PathBuf::from(normalized_path);
+    if !path_buf.exists() {
+        return Err(format!("Path does not exist: {}", path_buf.display()));
+    }
     open::that(path_buf.as_os_str()).map_err(|e| e.to_string())?;
     Ok(true)
 }
 
 #[tauri::command]
 pub async fn open_file(path: String) -> Result<bool, String> {
-    let path_buf = PathBuf::from(path);
+    let normalized_path = normalize_path(&path);
+    let path_buf = PathBuf::from(normalized_path);
+    if !path_buf.exists() {
+        return Err(format!("File does not exist: {}", path_buf.display()));
+    }
+
     open::that_detached(path_buf.as_os_str()).map_err(|e| e.to_string())?;
     Ok(true)
 }

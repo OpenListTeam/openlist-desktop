@@ -17,7 +17,8 @@ import {
   RefreshCw,
   Save,
   X,
-  Settings
+  Settings,
+  FolderOpen
 } from 'lucide-vue-next'
 import type { RcloneFormConfig } from '../types'
 import { useAppStore } from '@/stores/app'
@@ -280,15 +281,34 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
+const openInFileExplorer = async (path?: string) => {
+  if (!path) {
+    console.warn('Mount point path is not available')
+    return
+  }
+  const normalizedPath = path.trim()
+  try {
+    await store.openFolder(normalizedPath)
+  } catch (error: any) {
+    console.error('Failed to open mount point in file explorer:', error)
+    const errorMessage = error.message || error.toString() || 'Unknown error'
+    if (errorMessage.includes('does not exist')) {
+      console.warn(`Mount point path does not exist: ${normalizedPath}`)
+    } else {
+      console.error(`Failed to open file explorer: ${errorMessage}`)
+    }
+  }
+}
+
 onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
   await rcloneStore.checkRcloneBackendStatus()
   await store.loadRemoteConfigs()
   await refreshMounts()
-  mountRefreshInterval = setInterval(refreshMounts, 30000)
+  mountRefreshInterval = setInterval(refreshMounts, 15000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()
-  }, 10000)
+  }, 5000)
   await rcloneStore.init()
 })
 
@@ -441,7 +461,15 @@ onUnmounted(() => {
           <div class="card-meta">
             <div class="meta-tags">
               <span class="meta-tag">{{ config.type }}</span>
-              <span v-if="config.mountPoint" class="meta-tag">{{ config.mountPoint }}</span>
+              <span
+                v-if="config.mountPoint"
+                class="meta-tag clickable-mount-point"
+                @click="openInFileExplorer(config.mountPoint)"
+                :title="t('mount.meta.openInExplorer')"
+              >
+                <FolderOpen class="mount-point-icon" />
+                {{ config.mountPoint }}
+              </span>
               <span v-if="config.volumeName" class="meta-tag">{{ config.volumeName }}</span>
               <span v-if="config.autoMount" class="meta-tag auto">{{ t('mount.meta.autoMount') }}</span>
             </div>
@@ -481,6 +509,14 @@ onUnmounted(() => {
                 :title="t('mount.actions.delete')"
               >
                 <Trash2 class="btn-icon" />
+              </button>
+              <button
+                v-if="isConfigMounted(config)"
+                @click="openInFileExplorer(config.mountPoint)"
+                class="secondary-btn"
+                :title="t('mount.actions.openInExplorer')"
+              >
+                <FolderOpen class="btn-icon" />
               </button>
             </div>
           </div>

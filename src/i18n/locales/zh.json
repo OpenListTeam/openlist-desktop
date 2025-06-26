@@ -414,7 +414,8 @@
       "mount": "挂载",
       "unmount": "卸载",
       "edit": "编辑",
-      "delete": "删除"
+      "delete": "删除",
+      "openInExplorer": "在文件管理器中打开"
     },
     "status": {
       "status": "状态",
@@ -462,7 +463,8 @@
       }
     },
     "meta": {
-      "autoMount": "自动挂载"
+      "autoMount": "自动挂载",
+      "openInExplorer": "点击在文件管理器中打开"
     },
     "empty": {
       "title": "无远程配置",

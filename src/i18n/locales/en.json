@@ -414,7 +414,8 @@
       "mount": "Mount",
       "unmount": "Unmount",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "openInExplorer": "Open in Explorer"
     },
     "status": {
       "status": "Status",
@@ -462,7 +463,8 @@
       }
     },
     "meta": {
-      "autoMount": "Auto Mount"
+      "autoMount": "Auto Mount",
+      "openInExplorer": "Click to open in file explorer"
     },
     "empty": {
       "title": "No Remote Configurations",
