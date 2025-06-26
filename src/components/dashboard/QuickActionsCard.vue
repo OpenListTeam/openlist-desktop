@@ -75,11 +75,6 @@
             <input type="checkbox" v-model="settings.openlist.auto_launch" @change="handleAutoLaunchToggle" />
             <span class="toggle-text">{{ t('dashboard.quickActions.autoLaunch') }}</span>
           </label>
-
-          <label class="toggle-item">
-            <input type="checkbox" v-model="settings.rclone.auto_mount" @change="saveSettings" />
-            <span class="toggle-text">{{ t('dashboard.quickActions.autoMount') }}</span>
-          </label>
         </div>
       </div>
     </div>

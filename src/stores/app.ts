@@ -22,8 +22,7 @@ export const useAppStore = defineStore('app', () => {
       ssl_enabled: false
     },
     rclone: {
-      config: {}, // Flexible JSON object for rclone configuration
-      auto_mount: false
+      config: {} // Flexible JSON object for rclone configuration
     },
     app: {
       theme: 'light',

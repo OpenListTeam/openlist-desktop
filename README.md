@@ -262,7 +262,6 @@ npm run tauri build
         "extraFlags": ["--vfs-cache-mode", "full"]
       }
     },
-    "auto_mount": true
   }
 }
 ```
@@ -273,7 +272,6 @@ npm run tauri build
 {
   "app": {
     "theme": "auto",
-    "language": "zh",
     "auto_update_enabled": true,
     "monitor_interval": 30000
   }

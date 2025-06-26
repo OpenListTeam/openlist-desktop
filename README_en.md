@@ -262,7 +262,6 @@ Add custom Rclone flags for optimal performance:
         "extraFlags": ["--vfs-cache-mode", "full"]
       }
     },
-    "auto_mount": true
   }
 }
 ```
@@ -273,7 +272,6 @@ Add custom Rclone flags for optimal performance:
 {
   "app": {
     "theme": "auto",
-    "language": "en",
     "auto_update_enabled": true,
     "monitor_interval": 30000
   }

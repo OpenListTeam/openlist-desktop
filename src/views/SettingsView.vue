@@ -62,7 +62,6 @@ onMounted(async () => {
   if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
 
   if (!rcloneSettings.config) rcloneSettings.config = {}
-  if (rcloneSettings.auto_mount === undefined) rcloneSettings.auto_mount = false
 
   rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
   if (!appSettings.theme) appSettings.theme = 'light'
@@ -246,22 +245,6 @@ const handleReset = async () => {
       </div>
 
       <div v-if="activeTab === 'rclone'" class="tab-content">
-        <div class="settings-section">
-          <h2>{{ t('settings.rclone.config.title') }}</h2>
-          <p>{{ t('settings.rclone.config.subtitle') }}</p>
-
-          <div class="form-group">
-            <label class="switch-label">
-              <input v-model="rcloneSettings.auto_mount" type="checkbox" class="switch-input" />
-              <span class="switch-slider"></span>
-              <div class="switch-content">
-                <span class="switch-title">{{ t('settings.rclone.mount.autoMount.title') }}</span>
-                <span class="switch-description">{{ t('settings.rclone.mount.autoMount.description') }}</span>
-              </div>
-            </label>
-          </div>
-        </div>
-
         <div class="settings-section">
           <h2>{{ t('settings.rclone.config.title') }}</h2>
           <p>{{ t('settings.rclone.config.subtitle') }}</p>
