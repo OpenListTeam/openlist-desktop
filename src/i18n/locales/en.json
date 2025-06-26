@@ -255,7 +255,7 @@
         }
       },
       "autoStartApp": {
-        "title": "Auto-launch on startup",
+        "title": "Auto-launch on startup(Immediate Effect)",
         "subtitle": "Automatically start OpenList Desktop application when the system starts",
         "description": "Automatically start OpenList service when the application launches"
       },

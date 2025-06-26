@@ -255,7 +255,7 @@
         }
       },
       "autoStartApp": {
-        "title": "开机自动启动应用",
+        "title": "开机自动启动应用(立即生效)",
         "subtitle": "在系统启动时自动启动 OpenList 桌面应用",
         "description": "在系统启动时自动启动 OpenList 桌面应用"
       },
