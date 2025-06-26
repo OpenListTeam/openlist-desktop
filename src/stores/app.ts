@@ -215,6 +215,7 @@ export const useAppStore = defineStore('app', () => {
       if (!config) {
         throw new Error(`No configuration found for remote: ${name}`)
       }
+
       const processId = await getRcloneMountProcessId(name)
       console.log(`Mounting remote ${name} with process ID:`, processId)
       if (processId) {
@@ -227,6 +228,8 @@ export const useAppStore = defineStore('app', () => {
           if (!startResult) {
             throw new Error(`Failed to start mount process for remote: ${name}`)
           }
+          await loadMountInfos()
+          return
         } else {
           console.log(`Remote ${name} is already mounted`)
           return

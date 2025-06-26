@@ -450,7 +450,7 @@ onUnmounted(() => {
                 :is="getStatusIcon(getConfigStatus(config))"
                 class="status-icon"
                 :class="{
-                  spinning: isConfigMounting(config),
+                  spinning: isConfigMounting(config) || store.loading,
                   success: getConfigStatus(config) === 'mounted',
                   error: getConfigStatus(config) === 'error'
                 }"
