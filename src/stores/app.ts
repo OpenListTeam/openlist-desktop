@@ -28,8 +28,6 @@ export const useAppStore = defineStore('app', () => {
     app: {
       theme: 'light',
       monitor_interval: 5000,
-      service_api_token: 'yeM6PCcZGaCpapyBKAbjTp2YAhcku6cUr',
-      service_port: 53211,
       auto_update_enabled: true
     }
   })

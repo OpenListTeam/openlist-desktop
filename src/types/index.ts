@@ -64,8 +64,6 @@ export interface RcloneMountRequest {
 export interface AppConfig {
   theme?: 'light' | 'dark' | 'auto'
   monitor_interval?: number
-  service_api_token?: string
-  service_port?: number
   auto_update_enabled?: boolean
 }
 

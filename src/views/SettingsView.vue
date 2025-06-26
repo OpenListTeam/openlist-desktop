@@ -23,10 +23,8 @@ const appSettings = reactive({ ...store.settings.app })
 watch(autoStartApp, async newValue => {
   if (newValue) {
     await enable()
-    console.log(`registered for autostart? ${await isEnabled()}`)
   } else {
     await disable()
-    console.log(`registered for autostart? ${await isEnabled()}`)
   }
 })
 
@@ -67,11 +65,9 @@ onMounted(async () => {
   if (rcloneSettings.auto_mount === undefined) rcloneSettings.auto_mount = false
 
   rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-
   if (!appSettings.theme) appSettings.theme = 'light'
+
   if (!appSettings.monitor_interval) appSettings.monitor_interval = 5
-  if (!appSettings.service_api_token) appSettings.service_api_token = 'yeM6PCcZGaCpapyBKAbjTp2YAhcku6cUr'
-  if (!appSettings.service_port) appSettings.service_port = 53211
   if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
 })
 
@@ -368,37 +364,6 @@ const handleReset = async () => {
                 {{ t('settings.app.tutorial.restart') }}
               </button>
               <small>{{ t('settings.app.tutorial.help') }}</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h2>{{ t('settings.app.service.title') }}</h2>
-          <p>{{ t('settings.app.service.subtitle') }}</p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>{{ t('settings.app.service.port.label') }}</label>
-              <input
-                v-model.number="appSettings.service_port"
-                type="number"
-                class="form-input"
-                :placeholder="t('settings.app.service.port.placeholder')"
-                min="1"
-                max="65535"
-              />
-              <small>{{ t('settings.app.service.port.help') }}</small>
-            </div>
-
-            <div class="form-group">
-              <label>{{ t('settings.app.service.apiToken.label') }}</label>
-              <input
-                v-model="appSettings.service_api_token"
-                type="password"
-                class="form-input"
-                :placeholder="t('settings.app.service.apiToken.placeholder')"
-              />
-              <small>{{ t('settings.app.service.apiToken.help') }}</small>
             </div>
           </div>
         </div>
