@@ -1,0 +1,25 @@
+# Pre-commit hook configuration
+# Install with: yarn add -D husky lint-staged
+# Then run: npx husky install
+
+repos:
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend Lint
+        entry: yarn lint:fix
+        language: system
+        files: \.(ts|vue|js)$
+        
+      - id: rust-fmt
+        name: Rust Format
+        entry: bash -c 'cd src-tauri && cargo fmt --all'
+        language: system
+        files: \.rs$
+        
+      - id: rust-clippy
+        name: Rust Clippy
+        entry: bash -c 'cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings'
+        language: system
+        files: \.rs$
+        pass_filenames: false

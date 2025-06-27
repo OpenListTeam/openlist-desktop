@@ -2,6 +2,16 @@ name: 'Build and Release'
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0). Leave empty for auto-version based on conventional commits.'
+        required: false
+        type: string
+      skip_version_check:
+        description: 'Skip automatic version detection and use manual version'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       version:
@@ -25,9 +35,161 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  check-commits:
+    name: Check Commits and Determine Version
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && (inputs.version == '' || inputs.skip_version_check == false)
+    outputs:
+      should-release: ${{ steps.check.outputs.should-release }}
+      version-type: ${{ steps.check.outputs.version-type }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for conventional commits
+        id: check
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag found, will create initial release"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            echo "version-type=minor" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          COMMITS=$(git log $LAST_TAG..HEAD --oneline)
+          
+          if echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|fix|BREAKING CHANGE)"; then
+            echo "Found commits that warrant a release"
+            echo "should-release=true" >> $GITHUB_OUTPUT
+            
+            # Determine version bump type
+            if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
+              echo "version-type=major" >> $GITHUB_OUTPUT
+            elif echo "$COMMITS" | grep -q "feat"; then
+              echo "version-type=minor" >> $GITHUB_OUTPUT
+            else
+              echo "version-type=patch" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No commits found that warrant a release"
+            echo "should-release=false" >> $GITHUB_OUTPUT
+          fi
+
+  auto-version:
+    name: Calculate and Update Version
+    needs: check-commits
+    runs-on: ubuntu-latest
+    if: |
+      always() && 
+      (needs.check-commits.result == 'skipped' || 
+       (needs.check-commits.result == 'success' && needs.check-commits.outputs.should-release == 'true'))
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Calculate new version
+        id: version
+        run: |
+          # If manual version is provided, use it
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            MANUAL_VERSION="${{ inputs.version }}"
+            # Remove 'v' prefix if present
+            NEW_VERSION="${MANUAL_VERSION#v}"
+            echo "Using manual version: $NEW_VERSION"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # If triggered by workflow_call, use the provided version
+          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+            CALL_VERSION="${{ inputs.version }}"
+            NEW_VERSION="${CALL_VERSION#v}"
+            echo "Using workflow_call version: $NEW_VERSION"
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Auto-calculate version based on commits
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Parse version
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Bump version based on commit type
+          case "${{ needs.check-commits.outputs.version-type }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update version in files
+        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
+        run: |
+          # Update package.json
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ steps.version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ steps.version.outputs.version }}"/' src-tauri/tauri.conf.json
+
+      - name: Commit version bump
+        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push
+
+      - name: Create and push tag
+        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+
   check_tag_version:
     name: Check Tag and All Version Files Consistency
+    needs: auto-version
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || inputs.version != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,15 +199,18 @@ jobs:
 
       - name: Validate tag matches versions in package.json, Cargo.toml, tauri.conf.json
         run: |
-          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
-            echo "This workflow should only be triggered by a tag."
-            exit 1
+          # Get the tag to validate
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            TAG_REF="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
+            TAG_REF="${{ inputs.version }}"
+          else
+            TAG_REF="${GITHUB_REF##*/}"   # e.g., v1.2.3
           fi
-
-          TAG_REF="${GITHUB_REF##*/}"   # e.g., v1.2.3
+          
           TAG_VERSION="${TAG_REF#v}"    # Remove "v" prefix for direct comparison
 
-          echo "Git tag: $TAG_REF"
+          echo "Tag to validate: $TAG_REF"
 
           # Get version from package.json
           PKG_VERSION=$(jq -r .version package.json)
@@ -79,6 +244,8 @@ jobs:
 
   changelog:
     name: Generate Changelog
+    needs: [auto-version, check_tag_version]
+    if: always() && (needs.auto-version.result == 'success' && (needs.check_tag_version.result == 'success' || needs.check_tag_version.result == 'skipped'))
     runs-on: ubuntu-latest
     outputs:
       changelog: ${{ steps.changelog.outputs.changelog }}
@@ -92,8 +259,12 @@ jobs:
       - name: Get tag
         id: tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          if [ -n "${{ needs.auto-version.outputs.tag }}" ]; then
+            echo "tag=${{ needs.auto-version.outputs.tag }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            echo "tag=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
+            echo "tag=${{ inputs.version }}" >> $GITHUB_OUTPUT
           else
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           fi
@@ -128,7 +299,8 @@ jobs:
           path: changelog.md
 
   build:
-    needs: changelog
+    needs: [changelog, auto-version]
+    if: always() && needs.changelog.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -213,7 +385,8 @@ jobs:
   
   release-for-linux-arm:
     name: Release Build for Linux ARM
-    needs: changelog
+    needs: [changelog, auto-version]
+    if: always() && needs.changelog.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -336,9 +509,9 @@ jobs:
 
   publish:
     name: Publish Release
-    needs: [changelog, build, release-for-linux-arm]
+    needs: [changelog, build, release-for-linux-arm, auto-version]
     runs-on: ubuntu-latest
-    if: always() && needs.build.result == 'success'
+    if: always() && needs.build.result == 'success' && needs.changelog.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

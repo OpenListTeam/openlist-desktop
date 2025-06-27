@@ -29,7 +29,16 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "cz": "git-cz",
     "release": "bump-version",
-    "prebuild:dev": "node scripts/prepare.js"
+    "prebuild:dev": "node scripts/prepare.js",
+    "check:rust": "cd src-tauri && cargo check --all-targets --all-features",
+    "check:rust:fmt": "cd src-tauri && cargo fmt --all -- --check",
+    "check:rust:clippy": "cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings",
+    "check:rust:all": "yarn check:rust:fmt && yarn check:rust:clippy && yarn check:rust",
+    "check:frontend": "yarn lint && tsc --noEmit",
+    "check:all": "yarn check:frontend && yarn check:rust:all",
+    "fix:rust": "cd src-tauri && cargo fmt --all && cargo clippy --all-targets --all-features --fix --allow-dirty",
+    "fix:frontend": "yarn lint:fix",
+    "fix:all": "yarn fix:frontend && yarn fix:rust"
   },
   "config": {
     "commitizen": {
