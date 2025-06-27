@@ -2,6 +2,11 @@ name: 'Build and Release'
 
 on:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 permissions: write-all
 env:
   CARGO_INCREMENTAL: 0
