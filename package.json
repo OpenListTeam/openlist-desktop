@@ -19,15 +19,17 @@
   "homepage": "https://github.com/OpenListTeam/openlist-desktop",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "web:build": "tsc --noEmit && vite build",
+    "web:preview": "vite preview",
+    "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' tauri build",
+    "tauri:dev": "cross-env RUST_BACKTRACE=1 tauri dev",
     "tauri": "tauri",
     "nowatch": "tauri dev --no-watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "cz": "git-cz",
     "release": "bump-version",
-    "prepare-dev": "node scripts/prepare.js"
+    "prebuild:dev": "node scripts/prepare.js"
   },
   "config": {
     "commitizen": {
@@ -68,6 +70,7 @@
     "@typescript-eslint/parser": "^8.35.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "adm-zip": "^0.5.16",
+    "cross-env": "^7.0.3",
     "eslint": "^9.29.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unicorn": "^59.0.1",

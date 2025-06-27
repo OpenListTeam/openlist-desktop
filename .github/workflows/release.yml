@@ -2,23 +2,76 @@ name: 'Build and Release'
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g. v1.0.0)'
-        required: true
-        type: string
-
+permissions: write-all
 env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
   TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
   # macOS signing and notarization
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
   APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
   APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+concurrency:
+  group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  check_tag_version:
+    name: Check Tag and All Version Files Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure jq and grep are installed
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Validate tag matches versions in package.json, Cargo.toml, tauri.conf.json
+        run: |
+          if [[ "$GITHUB_REF" != refs/tags/* ]]; then
+            echo "This workflow should only be triggered by a tag."
+            exit 1
+          fi
+
+          TAG_REF="${GITHUB_REF##*/}"   # e.g., v1.2.3
+          TAG_VERSION="${TAG_REF#v}"    # Remove "v" prefix for direct comparison
+
+          echo "Git tag: $TAG_REF"
+
+          # Get version from package.json
+          PKG_VERSION=$(jq -r .version package.json)
+          echo "package.json version: $PKG_VERSION"
+
+          # Get version from tauri.conf.json
+          TAURI_VERSION=$(jq -r .package.version src-tauri/tauri.conf.json)
+          echo "tauri.conf.json version: $TAURI_VERSION"
+
+          # Get version from Cargo.toml using grep/sed
+          CARGO_VERSION=$(grep '^version' src-tauri/Cargo.toml | head -n1 | sed 's/version = "\(.*\)"/\1/')
+          echo "Cargo.toml version: $CARGO_VERSION"
+
+          # Check all match
+          if [[ "$TAG_VERSION" != "$PKG_VERSION" ]]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
+            exit 1
+          fi
+
+          if [[ "$TAG_VERSION" != "$TAURI_VERSION" ]]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match tauri.conf.json version ($TAURI_VERSION)."
+            exit 1
+          fi
+
+          if [[ "$TAG_VERSION" != "$CARGO_VERSION" ]]; then
+            echo "❌ Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)."
+            exit 1
+          fi
+
+          echo "✅ Tag version matches all version files."
+
   changelog:
     name: Generate Changelog
     runs-on: ubuntu-latest
@@ -75,51 +128,56 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            target: 'aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            target: 'x86_64-apple-darwin'
-          - platform: 'ubuntu-20.04'
-            args: '--target x86_64-unknown-linux-gnu'
-            target: 'x86_64-unknown-linux-gnu'
-          - platform: 'windows-latest'
-            args: '--target x86_64-pc-windows-msvc'
-            target: 'x86_64-pc-windows-msvc'
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+      
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          save-if: false
 
       - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: Sync node version and setup cache
+          sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+        
+      - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
-
-      - name: Install frontend dependencies
-        run: npm ci
-
+          node-version: "22"
+      
+      - name: Run install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
+      - name:  install and check
+        run: |
+          yarn install
+          yarn run prebuild:dev --target=${{ matrix.target }}
+          
       - name: Import Apple Developer Certificate (macOS only)
-        if: matrix.platform == 'macos-latest'
+        if: matrix.os == 'macos-latest'
         uses: apple-actions/import-codesign-certs@v2
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
@@ -128,7 +186,10 @@ jobs:
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
           # macOS signing and notarization environment variables
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -137,23 +198,146 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # Enable signing and notarization for macOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          ENABLE_CODE_SIGNING: ${{ matrix.platform == 'macos-latest' && 'true' || 'false' }}
         with:
           tagName: ${{ needs.changelog.outputs.tag }}
           releaseName: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
           releaseBody: ${{ needs.changelog.outputs.changelog }}
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
+          args: --target ${{ matrix.target }}
+  
+  release-for-linux-arm:
+    name: Release Build for Linux ARM
+    needs: changelog
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+          - os: ubuntu-22.04
+            target: armv7-unknown-linux-gnueabihf
+            arch: armhf
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          save-if: false
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run install
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
+
+      - name:  install and check
+        run: |
+          yarn install
+          yarn run prebuild:dev --target=${{ matrix.target }}
+
+      - name: "Setup for linux"
+        run: |-
+          sudo ls -lR /etc/apt/
+
+          cat > /tmp/sources.list << EOF
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-security main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-updates main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-backports main multiverse universe restricted
+
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-backports main multiverse universe restricted
+          EOF
+
+          sudo mv /etc/apt/sources.list /etc/apt/sources.list.default
+          sudo mv /tmp/sources.list /etc/apt/sources.list
+
+          sudo dpkg --add-architecture ${{ matrix.arch }}
+          sudo apt update
+
+          sudo apt install -y \
+            libxslt1.1:${{ matrix.arch }} \
+            libwebkit2gtk-4.1-dev:${{ matrix.arch }} \
+            libayatana-appindicator3-dev:${{ matrix.arch }} \
+            libssl-dev:${{ matrix.arch }} \
+            patchelf:${{ matrix.arch }} \
+            librsvg2-dev:${{ matrix.arch }}
+
+      - name: "Install aarch64 tools"
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu
+
+      - name: "Install armv7 tools"
+        if: matrix.target == 'armv7-unknown-linux-gnueabihf'
+        run: |
+          sudo apt install -y \
+            gcc-arm-linux-gnueabihf \
+            g++-arm-linux-gnueabihf
+
+      - name: Build for Linux
+        run: |
+          export PKG_CONFIG_ALLOW_CROSS=1
+          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
+            export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
+            export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/
+          elif [ "${{ matrix.target }}" == "armv7-unknown-linux-gnueabihf" ]; then
+            export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/:$PKG_CONFIG_PATH
+            export PKG_CONFIG_SYSROOT_DIR=/usr/arm-linux-gnueabihf/
+          fi
+          pnpm build --target ${{ matrix.target }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Get Version
+        run: |
+          sudo apt-get update
+          sudo apt-get install jq
+          echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
+          echo "BUILDTIME=$(TZ=Asia/Shanghai date)" >> $GITHUB_ENV
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.changelog.outputs.tag }}
+          name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
+          body: ${{ needs.changelog.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
 
   publish:
-    needs: [changelog, build]
+    name: Publish Release
+    needs: [changelog, build, release-for-linux-arm]
     runs-on: ubuntu-latest
     if: always() && needs.build.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      
       - name: Download changelog
         uses: actions/download-artifact@v4
         with:
@@ -167,62 +351,5 @@ jobs:
           body_path: changelog.md
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update latest.json for auto-updater
-        run: |
-          # Get the latest release info
-          RELEASE_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/latest")
-          
-          # Extract version and download URLs
-          VERSION=$(echo "$RELEASE_INFO" | jq -r '.tag_name')
-          RELEASE_NOTES=$(echo "$RELEASE_INFO" | jq -r '.body')
-          RELEASE_DATE=$(echo "$RELEASE_INFO" | jq -r '.published_at')
-          
-          # Create latest.json for Tauri updater
-          cat > latest.json << EOF
-          {
-            "version": "$VERSION",
-            "notes": $(echo "$RELEASE_NOTES" | jq -R -s .),
-            "pub_date": "$RELEASE_DATE",
-            "platforms": {
-              "darwin-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/$VERSION/OpenList-Desktop_${VERSION}_x64_mac.dmg.tar.gz"
-              },
-              "darwin-aarch64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/$VERSION/OpenList-Desktop_${VERSION}_aarch64_mac.dmg.tar.gz"
-              },
-              "linux-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/$VERSION/openlist-desktop_${VERSION}_amd64.AppImage.tar.gz"
-              },
-              "windows-x86_64": {
-                "signature": "",
-                "url": "https://github.com/${{ github.repository }}/releases/download/$VERSION/OpenList-Desktop_${VERSION}_x64_en-US.msi.zip"
-              }
-            }
-          }
-          EOF
-          
-          echo "Generated latest.json for auto-updater"
-          cat latest.json
-
-      - name: Commit and push latest.json
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # Check if there are changes to commit
-          if [[ -n $(git status --porcelain) ]]; then
-            git add latest.json
-            git commit -m "Update latest.json for auto-updater [skip ci]"
-            git push origin HEAD:main
-          else
-            echo "No changes to commit"
-          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
