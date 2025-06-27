@@ -14,22 +14,21 @@ pub async fn get_process_list(_state: State<'_, AppState>) -> Result<Vec<Process
     println!("Server Port: {}", port);
     let client = reqwest::Client::new();
     let response = client
-        .get(format!("http://127.0.0.1:{}/api/v1/processes", port))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .get(format!("http://127.0.0.1:{port}/api/v1/processes"))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let process_list = match serde_json::from_str::<ListProcessResponse>(&response_text) {
             Ok(process_list) => process_list,
             Err(e) => {
                 return Err(format!(
-                    "Failed to parse response: {}, response: {}",
-                    e, response_text
+                    "Failed to parse response: {e}, response: {response_text}"
                 ));
             }
         };
@@ -46,13 +45,12 @@ pub async fn start_process(id: String, _state: State<'_, AppState>) -> Result<bo
     let client = reqwest::Client::new();
     let response = client
         .post(format!(
-            "http://127.0.0.1:{}/api/v1/processes/{}/start",
-            port, id
+            "http://127.0.0.1:{port}/api/v1/processes/{id}/start"
         ))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         Ok(true)
     } else {
@@ -67,13 +65,12 @@ pub async fn stop_process(id: String, _state: State<'_, AppState>) -> Result<boo
     let client = reqwest::Client::new();
     let response = client
         .post(format!(
-            "http://127.0.0.1:{}/api/v1/processes/{}/stop",
-            port, id
+            "http://127.0.0.1:{port}/api/v1/processes/{id}/stop"
         ))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         Ok(true)
     } else {
@@ -88,26 +85,24 @@ pub async fn restart_process(id: String, _state: State<'_, AppState>) -> Result<
     let client = reqwest::Client::new();
     let stop_response = client
         .post(format!(
-            "http://127.0.0.1:{}/api/v1/processes/{}/stop",
-            port, id
+            "http://127.0.0.1:{port}/api/v1/processes/{id}/stop"
         ))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if stop_response.status().is_success() {
         let start_response = client
             .post(
                 url::Url::from_str(&format!(
-                    "http://127.0.0.1:{}/api/v1/processes/{}/start",
-                    port, id
+                    "http://127.0.0.1:{port}/api/v1/processes/{id}/start"
                 ))
                 .unwrap(),
             )
-            .header("Authorization", format!("Bearer {}", api_key))
+            .header("Authorization", format!("Bearer {api_key}"))
             .send()
             .await
-            .map_err(|e| format!("Failed to send request: {}", e))?;
+            .map_err(|e| format!("Failed to send request: {e}"))?;
         if start_response.status().is_success() {
             Ok(true)
         } else {
@@ -134,12 +129,12 @@ pub async fn update_process(
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client
-        .put(format!("http://127.0.0.1:{}/api/v1/processes/{}", port, id))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .put(format!("http://127.0.0.1:{port}/api/v1/processes/{id}"))
+        .header("Authorization", format!("Bearer {api_key}"))
         .json(&update_config)
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         Ok(true)
     } else {

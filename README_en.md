@@ -147,7 +147,7 @@ npm run tauri build
 
 #### Windows
 
-1. Download the `.msi` installer
+1. Download the `.exe` installer
 2. Run the installer as Administrator
 3. Follow the installation wizard
 4. Launch from Start Menu or Desktop shortcut
@@ -161,10 +161,14 @@ npm run tauri build
 
 #### Linux
 
-1. Download the `.AppImage` file
-2. Make it executable: `chmod +x OpenList-Desktop*.AppImage`
-3. Run the AppImage: `./OpenList-Desktop*.AppImage`
-4. Optional: Install using AppImageLauncher for system integration
+1. Download the `.deb` or `.rpm` package
+2. Use your package manager to install:
+
+   ```bash
+   sudo dpkg -i OpenList-Desktop_x.x.x_amd64.deb
+   # or
+   sudo rpm -i OpenList-Desktop_x.x.x_amd64.rpm
+   ```
 
 ## 🚀 Usage
 
@@ -179,7 +183,7 @@ npm run tauri build
 
 #### Starting Services
 
-```
+```bash
 Dashboard → Service Management → Start OpenList Service
 Dashboard → Quick Actions → Start Rclone Backend
 ```
@@ -227,7 +231,6 @@ Add custom Rclone flags for optimal performance:
 
 - **Right-click tray icon** for quick actions
 - **Double-click** to show/hide main window
-- **Service status** indicated by icon color
 
 ## ⚙️ Configuration
 
@@ -291,7 +294,7 @@ Add custom Rclone flags for optimal performance:
 
 #### Prerequisites
 
-- **Node.js**: v18+ with npm
+- **Node.js**: v22+ with yarn
 - **Rust**: Latest stable version
 - **Git**: Version control
 
@@ -303,7 +306,7 @@ git clone https://github.com/OpenListTeam/openlist-desktop.git
 cd openlist-desktop
 
 # Install Node.js dependencies
-npm install
+yarn install
 
 # Install Rust dependencies
 cd src-tauri
@@ -311,34 +314,35 @@ cargo fetch
 
 # Prepare development environment
 cd ..
-npm run prepare-dev
+yarn run prebuild:dev
 
 # Start development server
-npm run dev
+yarn run dev
 ```
 
 #### Development Commands
 
 ```bash
 # Start development server with hot reload
-npm run dev
+yarn run dev
 
 # Start development without file watching
-npm run nowatch
+yarn run nowatch
 
 # Run linting
-npm run lint
+yarn run lint
 
 # Fix linting issues
-npm run lint:fix
+yarn run lint:fix
 
 # Type checking
-npm run build --dry-run
+yarn run build --dry-run
 ```
 
 ## 🤝 Contributing
 
 We welcome contributions from the community!
+
 ## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](./LICENSE) file for details.

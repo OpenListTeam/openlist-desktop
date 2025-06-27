@@ -27,7 +27,7 @@ pub async fn save_settings_with_update_port(
 ) -> Result<bool, String> {
     save_settings(settings.clone(), state.clone()).await?;
     let app_dir = std::env::current_exe()
-        .map_err(|e| format!("Failed to get current exe path: {}", e))?
+        .map_err(|e| format!("Failed to get current exe path: {e}"))?
         .parent()
         .ok_or("Failed to get parent directory")?
         .to_path_buf();
@@ -40,7 +40,6 @@ pub async fn save_settings_with_update_port(
             std::fs::read_to_string(data_config_path.clone()).map_err(|e| e.to_string())?;
         serde_json::from_str(&content).map_err(|e| e.to_string())?
     } else {
-        // Create a default config structure if the file doesn't exist
         serde_json::json!({
             "scheme": {
                 "http_port": settings.openlist.port,
@@ -55,7 +54,6 @@ pub async fn save_settings_with_update_port(
             );
         }
     } else {
-        // If scheme doesn't exist, create it
         config["scheme"] = serde_json::json!({
             "http_port": settings.openlist.port
         });
@@ -70,16 +68,15 @@ pub async fn save_settings_with_update_port(
     {
         match stop_process(existing_process.config.id.clone(), state.clone()).await {
             Ok(_) => log::info!("OpenList core process stopped successfully"),
-            Err(e) => log::warn!("Failed to stop OpenList core process: {}", e),
+            Err(e) => log::warn!("Failed to stop OpenList core process: {e}"),
         }
         tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
         match start_process(existing_process.config.id.clone(), state.clone()).await {
             Ok(_) => log::info!("OpenList core process started successfully with new port"),
             Err(e) => {
-                log::error!("Failed to start OpenList core process: {}", e);
+                log::error!("Failed to start OpenList core process: {e}");
                 return Err(format!(
-                    "Failed to restart OpenList core with new port: {}",
-                    e
+                    "Failed to restart OpenList core with new port: {e}"
                 ));
             }
         }

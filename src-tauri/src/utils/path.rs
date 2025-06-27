@@ -5,15 +5,12 @@ pub static APP_ID: &str = "io.github.openlistteam.openlist.desktop";
 
 fn get_app_dir() -> Result<PathBuf, String> {
     let app_dir = env::current_exe()
-        .map_err(|e| format!("Failed to get current exe path: {}", e))?
+        .map_err(|e| format!("Failed to get current exe path: {e}"))?
         .parent()
         .ok_or("Failed to get parent directory")?
         .to_path_buf();
     if !app_dir.exists() {
-        return Err(format!(
-            "Application directory does not exist: {:?}",
-            app_dir
-        ));
+        return Err(format!("Application directory does not exist: {app_dir:?}"));
     }
 
     Ok(app_dir)
@@ -31,8 +28,7 @@ pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
 
     if !binary_path.exists() {
         return Err(format!(
-            "OpenList service binary not found at: {:?}",
-            binary_path
+            "OpenList service binary not found at: {binary_path:?}"
         ));
     }
 
@@ -51,8 +47,7 @@ pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
 
     if !binary_path.exists() {
         return Err(format!(
-            "Rclone service binary not found at: {:?}",
-            binary_path
+            "Rclone service binary not found at: {binary_path:?}"
         ));
     }
 

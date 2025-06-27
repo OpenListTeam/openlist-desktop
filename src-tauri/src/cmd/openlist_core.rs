@@ -13,9 +13,9 @@ pub async fn create_openlist_core_process(
     _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path = get_openlist_binary_path()
-        .map_err(|e| format!("Failed to get OpenList binary path: {}", e))?;
+        .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
     let log_file_path =
-        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {}", e))?;
+        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_openlist_core.log");
 
     let api_key = get_api_key();
@@ -39,23 +39,22 @@ pub async fn create_openlist_core_process(
     };
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("http://127.0.0.1:{}/api/v1/processes", port))
+        .post(format!("http://127.0.0.1:{port}/api/v1/processes"))
         .json(&config)
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let process_config = match serde_json::from_str::<CreateProcessResponse>(&response_text) {
             Ok(process_config) => process_config,
             Err(e) => {
                 return Err(format!(
-                    "Failed to parse response: {}, response: {}",
-                    e, response_text
+                    "Failed to parse response: {e}, response: {response_text}"
                 ));
             }
         };
@@ -85,10 +84,10 @@ pub async fn get_openlist_core_status(state: State<'_, AppState>) -> Result<Serv
     let health_check_url = format!("{}://localhost:{}", protocol, openlist_config.port);
 
     let url =
-        Url::parse(&health_check_url).map_err(|e| format!("Invalid health check URL: {}", e))?;
+        Url::parse(&health_check_url).map_err(|e| format!("Invalid health check URL: {e}"))?;
     let port = url.port_or_known_default();
 
-    let health_url = format!("{}/ping", health_check_url);
+    let health_url = format!("{health_check_url}/ping");
     let local_pid = None;
 
     match reqwest::get(&health_url).await {

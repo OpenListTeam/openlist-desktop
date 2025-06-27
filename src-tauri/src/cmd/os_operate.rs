@@ -159,11 +159,11 @@ pub async fn update_tool_version(
     version: String,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    log::info!("Updating {} to version {}", tool, version);
+    log::info!("Updating {tool} to version {version}");
 
     let process_list = get_process_list(state.clone())
         .await
-        .map_err(|e| format!("Failed to get process list: {}", e))?;
+        .map_err(|e| format!("Failed to get process list: {e}"))?;
 
     let process_name = match tool.as_str() {
         "openlist" => "single_openlist_core_process",
@@ -178,16 +178,16 @@ pub async fn update_tool_version(
 
     if was_running {
         if let Some(pid) = &process_id {
-            log::info!("Stopping {} process with ID: {}", tool, pid);
+            log::info!("Stopping {tool} process with ID: {pid}");
             match tool.as_str() {
                 "openlist" | "rclone" => {
                     stop_process(pid.clone(), state.clone())
                         .await
-                        .map_err(|e| format!("Failed to stop process: {}", e))?;
+                        .map_err(|e| format!("Failed to stop process: {e}"))?;
                 }
                 _ => return Err("Unsupported tool".to_string()),
             }
-            log::info!("Successfully stopped {} process", tool);
+            log::info!("Successfully stopped {tool} process");
         }
     }
 
@@ -195,33 +195,32 @@ pub async fn update_tool_version(
 
     match result {
         Ok(_) => {
-            log::info!("Successfully downloaded and replaced {} binary", tool);
+            log::info!("Successfully downloaded and replaced {tool} binary");
 
             if was_running {
                 if let Some(pid) = &process_id {
-                    log::info!("Starting {} process with ID: {}", tool, pid);
+                    log::info!("Starting {tool} process with ID: {pid}");
                     match tool.as_str() {
                         "openlist" | "rclone" => {
                             start_process(pid.clone(), state.clone())
                                 .await
-                                .map_err(|e| format!("Failed to start {} process: {}", tool, e))?;
+                                .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
                         }
                         _ => return Err("Unsupported tool".to_string()),
                     }
-                    log::info!("Successfully restarted {} process", tool);
+                    log::info!("Successfully restarted {tool} process");
                 }
             }
 
-            Ok(format!("Successfully updated {} to {}", tool, version))
+            Ok(format!("Successfully updated {tool} to {version}"))
         }
         Err(e) => {
-            log::error!("Failed to update {} binary: {}", tool, e);
+            log::error!("Failed to update {tool} binary: {e}");
 
             if was_running {
                 if let Some(pid) = &process_id {
                     log::info!(
-                        "Attempting to restart {} with previous binary after update failure",
-                        tool
+                        "Attempting to restart {tool} with previous binary after update failure"
                     );
                     match tool.as_str() {
                         "openlist" | "rclone" => {
@@ -232,7 +231,7 @@ pub async fn update_tool_version(
                 }
             }
 
-            Err(format!("Failed to update {} to {}: {}", tool, version, e))
+            Err(format!("Failed to update {tool} to {version}: {e}"))
         }
     }
 }
@@ -258,18 +257,18 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
         }
     );
 
-    log::info!("Detected platform: {}", platform_arch);
+    log::info!("Detected platform: {platform_arch}");
 
     let (binary_path, download_info) = match tool {
         "openlist" => {
             let path = get_openlist_binary_path()
-                .map_err(|e| format!("Failed to get OpenList binary path: {}", e))?;
+                .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
             let info = get_openlist_download_info(&platform_arch, version)?;
             (path, info)
         }
         "rclone" => {
             let path = get_rclone_binary_path()
-                .map_err(|e| format!("Failed to get Rclone binary path: {}", e))?;
+                .map_err(|e| format!("Failed to get Rclone binary path: {e}"))?;
             let info = get_rclone_download_info(&platform_arch, version)?;
             (path, info)
         }
@@ -278,8 +277,8 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
 
     log::info!("Downloading {} from: {}", tool, download_info.download_url);
 
-    let temp_dir = std::env::temp_dir().join(format!("{}-update-{}", tool, version));
-    fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {}", e))?;
+    let temp_dir = std::env::temp_dir().join(format!("{tool}-update-{version}"));
+    fs::create_dir_all(&temp_dir).map_err(|e| format!("Failed to create temp directory: {e}"))?;
 
     let archive_path = temp_dir.join(&download_info.archive_name);
     download_file(&download_info.download_url, &archive_path).await?;
@@ -302,7 +301,7 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
 
     if binary_path.exists() {
         fs::copy(&binary_path, &backup_path)
-            .map_err(|e| format!("Failed to backup current binary: {}", e))?;
+            .map_err(|e| format!("Failed to backup current binary: {e}"))?;
     }
 
     fs::copy(&extracted_binary_path, &binary_path).map_err(|e| {
@@ -310,7 +309,7 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
             let _ = fs::copy(&backup_path, &binary_path);
             let _ = fs::remove_file(&backup_path);
         }
-        format!("Failed to replace binary: {}", e)
+        format!("Failed to replace binary: {e}")
     })?;
 
     if backup_path.exists() {
@@ -321,17 +320,17 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
     {
         use std::os::unix::fs::PermissionsExt;
         let mut perms = fs::metadata(&binary_path)
-            .map_err(|e| format!("Failed to get binary metadata: {}", e))?
+            .map_err(|e| format!("Failed to get binary metadata: {e}"))?
             .permissions();
         perms.set_mode(0o755);
         fs::set_permissions(&binary_path, perms)
-            .map_err(|e| format!("Failed to set executable permissions: {}", e))?;
+            .map_err(|e| format!("Failed to set executable permissions: {e}"))?;
     }
 
     let _ = fs::remove_file(&extracted_binary_path);
     let _ = fs::remove_dir_all(&temp_dir);
 
-    log::info!("Successfully replaced {} binary", tool);
+    log::info!("Successfully replaced {tool} binary");
     Ok(())
 }
 
@@ -349,11 +348,10 @@ fn get_openlist_download_info(platform_arch: &str, version: &str) -> Result<Down
     let archive_ext = if is_unix { "tar.gz" } else { "zip" };
     let exe_ext = if is_windows { ".exe" } else { "" };
 
-    let archive_name = format!("openlist-{}.{}", arch_map, archive_ext);
-    let executable_name = format!("openlist{}", exe_ext);
+    let archive_name = format!("openlist-{arch_map}.{archive_ext}");
+    let executable_name = format!("openlist{exe_ext}");
     let download_url = format!(
-        "https://github.com/OpenListTeam/OpenList/releases/download/{}/{}",
-        version, archive_name
+        "https://github.com/OpenListTeam/OpenList/releases/download/{version}/{archive_name}"
     );
 
     Ok(DownloadInfo {
@@ -368,12 +366,10 @@ fn get_rclone_download_info(platform_arch: &str, version: &str) -> Result<Downlo
     let is_windows = platform_arch.starts_with("win32");
 
     let exe_ext = if is_windows { ".exe" } else { "" };
-    let archive_name = format!("rclone-{}-{}.zip", version, arch_map);
-    let executable_name = format!("rclone{}", exe_ext);
-    let download_url = format!(
-        "https://github.com/rclone/rclone/releases/download/{}/{}",
-        version, archive_name
-    );
+    let archive_name = format!("rclone-{version}-{arch_map}.zip");
+    let executable_name = format!("rclone{exe_ext}");
+    let download_url =
+        format!("https://github.com/rclone/rclone/releases/download/{version}/{archive_name}");
 
     Ok(DownloadInfo {
         download_url,
@@ -394,8 +390,7 @@ fn get_openlist_arch_mapping(platform_arch: &str) -> Result<&'static str, String
         "linux-arm64" => Ok("linux-arm64"),
         "linux-arm" => Ok("linux-arm-7"),
         _ => Err(format!(
-            "Unsupported platform architecture: {}",
-            platform_arch
+            "Unsupported platform architecture: {platform_arch}"
         )),
     }
 }
@@ -412,25 +407,24 @@ fn get_rclone_arch_mapping(platform_arch: &str) -> Result<&'static str, String> 
         "linux-arm64" => Ok("linux-arm64"),
         "linux-arm" => Ok("linux-arm-v7"),
         _ => Err(format!(
-            "Unsupported platform architecture: {}",
-            platform_arch
+            "Unsupported platform architecture: {platform_arch}"
         )),
     }
 }
 
 async fn download_file(url: &str, path: &PathBuf) -> Result<(), String> {
-    log::info!("Downloading file from: {}", url);
+    log::info!("Downloading file from: {url}");
 
     let client = reqwest::Client::builder()
         .user_agent("OpenList Desktop/1.0")
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+        .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
     let response = client
         .get(url)
         .send()
         .await
-        .map_err(|e| format!("Failed to download file: {}", e))?;
+        .map_err(|e| format!("Failed to download file: {e}"))?;
 
     if !response.status().is_success() {
         return Err(format!(
@@ -442,11 +436,11 @@ async fn download_file(url: &str, path: &PathBuf) -> Result<(), String> {
     let bytes = response
         .bytes()
         .await
-        .map_err(|e| format!("Failed to read response bytes: {}", e))?;
+        .map_err(|e| format!("Failed to read response bytes: {e}"))?;
 
-    fs::write(path, &bytes).map_err(|e| format!("Failed to write file: {}", e))?;
+    fs::write(path, &bytes).map_err(|e| format!("Failed to write file: {e}"))?;
 
-    log::info!("Downloaded file to: {:?}", path);
+    log::info!("Downloaded file to: {path:?}");
     Ok(())
 }
 
@@ -456,7 +450,7 @@ async fn extract_binary(
     executable_name: &str,
     tool: &str,
 ) -> Result<PathBuf, String> {
-    log::info!("Extracting archive: {:?}", archive_path);
+    log::info!("Extracting archive: {archive_path:?}");
 
     let archive_name = archive_path
         .file_name()
@@ -468,7 +462,7 @@ async fn extract_binary(
     } else if archive_name.ends_with(".tar.gz") {
         extract_tar_gz(archive_path, extract_dir, executable_name, tool)
     } else {
-        Err(format!("Unsupported archive format: {}", archive_name))
+        Err(format!("Unsupported archive format: {archive_name}"))
     }
 }
 
@@ -478,34 +472,33 @@ fn extract_zip(
     executable_name: &str,
     tool: &str,
 ) -> Result<PathBuf, String> {
-    let file =
-        fs::File::open(archive_path).map_err(|e| format!("Failed to open zip file: {}", e))?;
+    let file = fs::File::open(archive_path).map_err(|e| format!("Failed to open zip file: {e}"))?;
 
     let mut archive =
-        zip::ZipArchive::new(file).map_err(|e| format!("Failed to read zip archive: {}", e))?;
+        zip::ZipArchive::new(file).map_err(|e| format!("Failed to read zip archive: {e}"))?;
 
     let mut executable_path = None;
 
     for i in 0..archive.len() {
         let mut file = archive
             .by_index(i)
-            .map_err(|e| format!("Failed to read zip entry: {}", e))?;
+            .map_err(|e| format!("Failed to read zip entry: {e}"))?;
 
         let file_name = file.name();
 
         let is_target_executable = if tool == "rclone" {
             file_name.ends_with(executable_name) && file_name.contains("rclone")
         } else {
-            file_name == executable_name || file_name.ends_with(&format!("/{}", executable_name))
+            file_name == executable_name || file_name.ends_with(&format!("/{executable_name}"))
         };
 
         if is_target_executable {
             let output_path = extract_dir.join(executable_name);
             let mut output_file = fs::File::create(&output_path)
-                .map_err(|e| format!("Failed to create output file: {}", e))?;
+                .map_err(|e| format!("Failed to create output file: {e}"))?;
 
             std::io::copy(&mut file, &mut output_file)
-                .map_err(|e| format!("Failed to extract file: {}", e))?;
+                .map_err(|e| format!("Failed to extract file: {e}"))?;
 
             executable_path = Some(output_path);
             break;
@@ -513,7 +506,7 @@ fn extract_zip(
     }
 
     executable_path
-        .ok_or_else(|| format!("Executable '{}' not found in zip archive", executable_name))
+        .ok_or_else(|| format!("Executable '{executable_name}' not found in zip archive"))
 }
 
 fn extract_tar_gz(
@@ -526,7 +519,7 @@ fn extract_tar_gz(
     use tar::Archive;
 
     let file =
-        fs::File::open(archive_path).map_err(|e| format!("Failed to open tar.gz file: {}", e))?;
+        fs::File::open(archive_path).map_err(|e| format!("Failed to open tar.gz file: {e}"))?;
 
     let gz_decoder = GzDecoder::new(file);
     let mut archive = Archive::new(gz_decoder);
@@ -535,21 +528,21 @@ fn extract_tar_gz(
 
     for entry in archive
         .entries()
-        .map_err(|e| format!("Failed to read tar entries: {}", e))?
+        .map_err(|e| format!("Failed to read tar entries: {e}"))?
     {
-        let mut entry = entry.map_err(|e| format!("Failed to read tar entry: {}", e))?;
+        let mut entry = entry.map_err(|e| format!("Failed to read tar entry: {e}"))?;
         let path = entry
             .path()
-            .map_err(|e| format!("Failed to get entry path: {}", e))?;
+            .map_err(|e| format!("Failed to get entry path: {e}"))?;
 
         if let Some(file_name) = path.file_name() {
             if file_name == executable_name {
                 let output_path = extract_dir.join(executable_name);
                 let mut output_file = fs::File::create(&output_path)
-                    .map_err(|e| format!("Failed to create output file: {}", e))?;
+                    .map_err(|e| format!("Failed to create output file: {e}"))?;
 
                 std::io::copy(&mut entry, &mut output_file)
-                    .map_err(|e| format!("Failed to extract file: {}", e))?;
+                    .map_err(|e| format!("Failed to extract file: {e}"))?;
 
                 executable_path = Some(output_path);
                 break;
@@ -557,10 +550,6 @@ fn extract_tar_gz(
         }
     }
 
-    executable_path.ok_or_else(|| {
-        format!(
-            "Executable '{}' not found in tar.gz archive",
-            executable_name
-        )
-    })
+    executable_path
+        .ok_or_else(|| format!("Executable '{executable_name}' not found in tar.gz archive"))
 }

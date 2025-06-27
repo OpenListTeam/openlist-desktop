@@ -147,7 +147,7 @@ npm run tauri build
 
 #### Windows
 
-1. 下载 `.msi` 安装程序
+1. 下载 `.exe` 安装程序
 2. 以管理员身份运行安装程序
 3. 按照安装向导进行操作
 4. 从开始菜单或桌面快捷方式启动
@@ -161,10 +161,13 @@ npm run tauri build
 
 #### Linux
 
-1. 下载 `.AppImage` 文件
-2. 使其可执行：`chmod +x OpenList-Desktop*.AppImage`
-3. 运行 AppImage：`./OpenList-Desktop*.AppImage`
-4. 可选：使用 AppImageLauncher 安装以进行系统集成
+1. 下载 `.deb` 或 `.rpm` 包
+2. 使用包管理器安装：
+   ```bash
+   sudo dpkg -i OpenList-Desktop_x.x.x_amd64.deb
+   # 或者
+   sudo rpm -i OpenList-Desktop_x.x.x_amd64.rpm
+   ```
 
 ## 🚀 使用说明
 
@@ -179,7 +182,7 @@ npm run tauri build
 
 #### 启动服务
 
-```
+```bash
 仪表板 → 服务管理 → 启动 OpenList 服务
 仪表板 → 快速操作 → 启动 Rclone 后端
 ```
@@ -227,7 +230,6 @@ npm run tauri build
 
 - **右键单击托盘图标** 进行快速操作
 - **双击** 显示/隐藏主窗口
-- **服务状态** 通过图标颜色指示
 
 ## ⚙️ 配置
 
@@ -291,7 +293,7 @@ npm run tauri build
 
 #### 先决条件
 
-- **Node.js**：v18+ 和 npm
+- **Node.js**：v22+ 和 yarn
 - **Rust**：最新稳定版本
 - **Git**：版本控制
 
@@ -303,7 +305,7 @@ git clone https://github.com/OpenListTeam/openlist-desktop.git
 cd openlist-desktop
 
 # 安装 Node.js 依赖
-npm install
+yarn install
 
 # 安装 Rust 依赖
 cd src-tauri
@@ -311,29 +313,36 @@ cargo fetch
 
 # 准备开发环境
 cd ..
-npm run prepare-dev
+yarn run prebuild:dev
 
 # 启动开发服务器
-npm run dev
+yarn run dev
 ```
 
 #### 开发命令
 
 ```bash
 # 启动带热重载的开发服务器
-npm run dev
+yarn run dev
 
 # 启动不带文件监视的开发
-npm run nowatch
+yarn run nowatch
 
 # 运行代码检查
-npm run lint
+yarn run lint
 
 # 修复代码检查问题
-npm run lint:fix
+yarn run lint:fix
 
 # 类型检查
-npm run build --dry-run
+yarn run build --dry-run
+```
+
+#### 提交PR
+
+```bash
+git add .
+yarn cz
 ```
 
 ## 🤝 贡献

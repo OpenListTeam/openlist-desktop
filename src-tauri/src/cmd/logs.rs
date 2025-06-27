@@ -7,10 +7,10 @@ pub async fn get_admin_password() -> Result<String, String> {
     let logs_dir = app_dir.join("logs/process_openlist_core.log");
 
     let logs_content =
-        std::fs::read_to_string(logs_dir).map_err(|e| format!("Failed to read log file: {}", e))?;
+        std::fs::read_to_string(logs_dir).map_err(|e| format!("Failed to read log file: {e}"))?;
 
     let re = Regex::new(r"Successfully created the admin user and the initial password is: (\w+)")
-        .map_err(|e| format!("Failed to create regex: {}", e))?;
+        .map_err(|e| format!("Failed to create regex: {e}"))?;
 
     let mut last_password = None;
     for line in logs_content.lines() {

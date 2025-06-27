@@ -79,7 +79,7 @@ pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
                     log::debug!("Mouse left tray icon area");
                 }
                 _ => {
-                    log::debug!("Other tray event: {:?}", event);
+                    log::debug!("Other tray event: {event:?}");
                 }
             }
         })
@@ -200,10 +200,7 @@ pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri:
         )?;
 
         tray.set_menu(Some(menu))?;
-        log::debug!(
-            "Tray menu updated with service_running: {}",
-            service_running
-        );
+        log::debug!("Tray menu updated with service_running: {service_running}");
     }
     Ok(())
 }
@@ -217,17 +214,17 @@ pub fn update_tray_menu_delayed(
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(3000));
         if let Err(e) = update_tray_menu(&app_handle_clone, service_running) {
-            log::error!("Failed to update tray menu (delayed): {}", e);
+            log::error!("Failed to update tray menu (delayed): {e}");
         }
     });
     Ok(())
 }
 
 fn handle_core_action(app_handle: &AppHandle, action: &str) {
-    log::info!("Handling core action from tray: {}", action);
+    log::info!("Handling core action from tray: {action}");
 
     if let Err(e) = app_handle.emit("tray-core-action", action) {
-        log::error!("Failed to emit tray core action event: {}", e);
+        log::error!("Failed to emit tray core action event: {e}");
     }
 
     log::debug!("Core action '{}' dispatched to frontend", action);
@@ -289,10 +286,7 @@ pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> 
             *last_update = Some(Instant::now());
         }
 
-        log::debug!(
-            "Tray menu force updated with service_running: {}",
-            service_running
-        );
+        log::debug!("Tray menu force updated with service_running: {service_running}");
     }
     Ok(())
 }

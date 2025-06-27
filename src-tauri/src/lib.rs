@@ -45,7 +45,7 @@ async fn update_tray_menu(
     service_running: bool,
 ) -> Result<(), String> {
     tray::update_tray_menu(&app_handle, service_running)
-        .map_err(|e| format!("Failed to update tray menu: {}", e))
+        .map_err(|e| format!("Failed to update tray menu: {e}"))
 }
 
 #[tauri::command]
@@ -54,7 +54,7 @@ async fn update_tray_menu_delayed(
     service_running: bool,
 ) -> Result<(), String> {
     tray::update_tray_menu_delayed(&app_handle, service_running)
-        .map_err(|e| format!("Failed to update tray menu (delayed): {}", e))
+        .map_err(|e| format!("Failed to update tray menu (delayed): {e}"))
 }
 
 #[tauri::command]
@@ -63,7 +63,7 @@ async fn force_update_tray_menu(
     service_running: bool,
 ) -> Result<(), String> {
     tray::force_update_tray_menu(&app_handle, service_running)
-        .map_err(|e| format!("Failed to force update tray menu: {}", e))
+        .map_err(|e| format!("Failed to force update tray menu: {e}"))
 }
 
 fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
@@ -79,7 +79,7 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
                     cmd::custom_updater::perform_background_update_check(app_handle_initial.clone())
                         .await
                 {
-                    log::debug!("Initial background update check failed: {}", e);
+                    log::debug!("Initial background update check failed: {e}");
                 }
             }
             _ => {
@@ -176,14 +176,13 @@ pub fn run() {
             utils::path::get_app_config_dir()?;
             let app_state = app.state::<AppState>();
             if let Err(e) = app_state.init(app_handle) {
-                log::error!("Failed to initialize app state: {}", e);
+                log::error!("Failed to initialize app state: {e}");
                 return Err(Box::new(std::io::Error::other(format!(
-                    "App state initialization failed: {}",
-                    e
+                    "App state initialization failed: {e}"
                 ))));
             }
             if let Err(e) = tray::create_tray(app_handle) {
-                log::error!("Failed to create system tray: {}", e);
+                log::error!("Failed to create system tray: {e}");
             } else {
                 log::info!("System tray created successfully");
             }

@@ -28,7 +28,7 @@ impl MergedSettings {
 
     pub fn get_data_config_path() -> Result<PathBuf, String> {
         let app_dir = std::env::current_exe()
-            .map_err(|e| format!("Failed to get current exe path: {}", e))?
+            .map_err(|e| format!("Failed to get current exe path: {e}"))?
             .parent()
             .ok_or("Failed to get parent directory")?
             .to_path_buf();

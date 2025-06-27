@@ -20,18 +20,18 @@ pub async fn rclone_list_config(
 ) -> Result<serde_json::Value, String> {
     let client = Client::new();
     let response = client
-        .post(format!("{}/config/dump", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/dump"))
         .header("Authorization", RCLONE_AUTH)
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let json: serde_json::Value = serde_json::from_str(&response_text)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+            .map_err(|e| format!("Failed to parse JSON: {e}"))?;
         let remotes = if remote_type.is_empty() {
             json.clone()
         } else if let Some(obj) = json.as_object() {
@@ -109,7 +109,7 @@ pub async fn rclone_list_mounts() -> Result<RcloneMountListResponse, String> {
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to list mounts: {}", error_text))
+        Err(format!("Failed to list mounts: {error_text}"))
     }
 }
 
@@ -305,23 +305,22 @@ pub async fn create_rclone_mount_remote_process(
     };
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("http://127.0.0.1:{}/api/v1/processes", port))
+        .post(format!("http://127.0.0.1:{port}/api/v1/processes"))
         .json(&config)
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let process_config = match serde_json::from_str::<CreateProcessResponse>(&response_text) {
             Ok(process_config) => process_config,
             Err(e) => {
                 return Err(format!(
-                    "Failed to parse response: {}, response: {}",
-                    e, response_text
+                    "Failed to parse response: {e}, response: {response_text}"
                 ));
             }
         };

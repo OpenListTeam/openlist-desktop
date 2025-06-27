@@ -31,7 +31,7 @@ impl AppState {
                 Ok(())
             }
             Err(e) => {
-                log::warn!("Failed to load settings, using defaults: {}", e);
+                log::warn!("Failed to load settings, using defaults: {e}");
                 let default_settings = MergedSettings::default();
                 let mut app_settings = self.app_settings.write();
                 *app_settings = Some(default_settings);

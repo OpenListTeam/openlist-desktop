@@ -67,10 +67,10 @@ fn get_current_platform() -> String {
     let arch = env::consts::ARCH;
 
     match os {
-        "windows" => format!("{}-pc-windows-msvc", arch),
-        "macos" => format!("{}-apple-darwin", arch),
-        "linux" => format!("{}-unknown-linux-gnu", arch),
-        _ => format!("{}-{}", arch, os),
+        "windows" => format!("{arch}-pc-windows-msvc"),
+        "macos" => format!("{arch}-apple-darwin"),
+        "linux" => format!("{arch}-unknown-linux-gnu"),
+        _ => format!("{arch}-{os}"),
     }
 }
 
@@ -178,8 +178,8 @@ pub async fn check_for_updates() -> Result<UpdateCheck, String> {
         .send()
         .await
         .map_err(|e| {
-            let error_msg = format!("Network error while checking for updates: {}", e);
-            log::error!("{}", error_msg);
+            let error_msg = format!("Network error while checking for updates: {e}");
+            log::error!("{error_msg}");
             error_msg
         })?;
 
@@ -196,13 +196,13 @@ pub async fn check_for_updates() -> Result<UpdateCheck, String> {
                 status.canonical_reason().unwrap_or("Unknown")
             )
         };
-        log::error!("{}", error_msg);
+        log::error!("{error_msg}");
         return Err(error_msg);
     }
 
     let release: GitHubRelease = response.json().await.map_err(|e| {
-        log::error!("Failed to parse GitHub response: {}", e);
-        format!("Failed to parse update information: {}", e)
+        log::error!("Failed to parse GitHub response: {e}");
+        format!("Failed to parse update information: {e}")
     })?;
 
     let current_version = env!("CARGO_PKG_VERSION");
@@ -235,14 +235,14 @@ pub async fn download_update(
     asset_url: String,
     asset_name: String,
 ) -> Result<String, String> {
-    log::info!("Starting download of update: {}", asset_name);
+    log::info!("Starting download of update: {asset_name}");
 
     let client = Client::new();
 
     let temp_dir = std::env::temp_dir();
     let file_path = temp_dir.join(&asset_name);
 
-    log::info!("Downloading to: {:?}", file_path);
+    log::info!("Downloading to: {file_path:?}");
 
     let mut response = client
         .get(&asset_url)
@@ -251,8 +251,8 @@ pub async fn download_update(
         .send()
         .await
         .map_err(|e| {
-            let error_msg = format!("Failed to start download: {}", e);
-            log::error!("{}", error_msg);
+            let error_msg = format!("Failed to start download: {e}");
+            log::error!("{error_msg}");
             error_msg
         })?;
 
@@ -267,16 +267,16 @@ pub async fn download_update(
                 status.canonical_reason().unwrap_or("Unknown")
             )
         };
-        log::error!("{}", error_msg);
+        log::error!("{error_msg}");
         return Err(error_msg);
     }
 
     let total_size = response.content_length().unwrap_or(0);
-    log::info!("Download size: {} bytes", total_size);
+    log::info!("Download size: {total_size} bytes");
 
     let mut file = tokio::fs::File::create(&file_path).await.map_err(|e| {
-        log::error!("Failed to create download file: {}", e);
-        format!("Failed to create file: {}", e)
+        log::error!("Failed to create download file: {e}");
+        format!("Failed to create file: {e}")
     })?;
 
     let mut downloaded = 0u64;
@@ -284,12 +284,12 @@ pub async fn download_update(
     let mut last_downloaded = 0u64;
 
     while let Some(chunk) = response.chunk().await.map_err(|e| {
-        log::error!("Download chunk error: {}", e);
-        format!("Download error: {}", e)
+        log::error!("Download chunk error: {e}");
+        format!("Download error: {e}")
     })? {
         file.write_all(&chunk).await.map_err(|e| {
-            log::error!("File write error: {}", e);
-            format!("File write error: {}", e)
+            log::error!("File write error: {e}");
+            format!("File write error: {e}")
         })?;
 
         downloaded += chunk.len() as u64;
@@ -317,7 +317,7 @@ pub async fn download_update(
             };
 
             if let Err(e) = app.emit("download-progress", &progress) {
-                log::error!("Failed to emit download progress: {}", e);
+                log::error!("Failed to emit download progress: {e}");
             }
 
             last_progress_time = now;
@@ -326,14 +326,14 @@ pub async fn download_update(
     }
 
     file.flush().await.map_err(|e| {
-        log::error!("Failed to flush file: {}", e);
-        format!("File flush error: {}", e)
+        log::error!("Failed to flush file: {e}");
+        format!("File flush error: {e}")
     })?;
 
-    log::info!("Download completed: {} bytes", downloaded);
+    log::info!("Download completed: {downloaded} bytes");
 
     if let Err(e) = app.emit("update-download-completed", ()) {
-        log::error!("Failed to emit download completed event: {}", e);
+        log::error!("Failed to emit download completed event: {e}");
     }
 
     Ok(file_path.to_string_lossy().to_string())
@@ -344,7 +344,7 @@ pub async fn install_update_and_restart(
     app: AppHandle,
     installer_path: String,
 ) -> Result<(), String> {
-    log::info!("Installing update from: {}", installer_path);
+    log::info!("Installing update from: {installer_path}");
 
     let path = PathBuf::from(&installer_path);
 
@@ -355,7 +355,7 @@ pub async fn install_update_and_restart(
     }
 
     if let Err(e) = app.emit("update-install-started", ()) {
-        log::error!("Failed to emit install started event: {}", e);
+        log::error!("Failed to emit install started event: {e}");
     }
 
     let result = match env::consts::OS {
@@ -370,11 +370,11 @@ pub async fn install_update_and_restart(
             log::info!("Update installation started successfully");
 
             if let Err(e) = app.emit("update-install-completed", ()) {
-                log::error!("Failed to emit install completed event: {}", e);
+                log::error!("Failed to emit install completed event: {e}");
             }
 
             if let Err(e) = app.emit("app-restarting", ()) {
-                log::error!("Failed to emit app restarting event: {}", e);
+                log::error!("Failed to emit app restarting event: {e}");
             }
 
             tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -383,7 +383,7 @@ pub async fn install_update_and_restart(
         Err(e) => {
             log::error!("Update installation failed: {}", e);
             if let Err(emit_err) = app.emit("update-install-error", &e) {
-                log::error!("Failed to emit install error event: {}", emit_err);
+                log::error!("Failed to emit install error event: {emit_err}");
             }
             Err(e)
         }
@@ -398,10 +398,10 @@ async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> 
 
     let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
-            .map_err(|e| format!("Failed to start Windows installer: {}", e))
+            .map_err(|e| format!("Failed to start Windows installer: {e}"))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?;
+    .map_err(|e| format!("Task error: {e}"))?;
 
     Ok(())
 }
@@ -450,10 +450,10 @@ async fn install_linux_update(installer_path: &PathBuf) -> Result<(), String> {
 
     let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
-            .map_err(|e| format!("Failed to start Linux installer: {}", e))
+            .map_err(|e| format!("Failed to start Linux installer: {e}"))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?;
+    .map_err(|e| format!("Task error: {e}"))?;
 
     Ok(())
 }
@@ -468,7 +468,7 @@ pub async fn set_auto_check_enabled(
     enabled: bool,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    log::info!("Setting auto-check updates preference to: {}", enabled);
+    log::info!("Setting auto-check updates preference to: {enabled}");
 
     let mut settings = state.get_settings().unwrap_or_else(|| {
         use crate::conf::config::MergedSettings;
@@ -479,7 +479,7 @@ pub async fn set_auto_check_enabled(
     state.update_settings(settings.clone());
     save_settings(settings, state)
         .await
-        .map_err(|e| format!("Failed to save settings: {}", e))?;
+        .map_err(|e| format!("Failed to save settings: {e}"))?;
     Ok(())
 }
 
@@ -506,15 +506,15 @@ pub async fn perform_background_update_check(app: AppHandle) -> Result<(), Strin
                 );
 
                 if let Err(e) = app.emit("background-update-available", &update_check) {
-                    log::error!("Failed to emit background-update-available event: {}", e);
+                    log::error!("Failed to emit background-update-available event: {e}");
                 }
             } else {
-                log::debug!("Background check: App is up to date");
+                log::error!("Background check: App is up to date");
             }
             Ok(())
         }
         Err(e) => {
-            log::debug!("Background update check failed: {}", e);
+            log::error!("Background update check failed: {e}");
             Ok(())
         }
     }
@@ -525,7 +525,7 @@ pub async fn restart_app(app: AppHandle) {
     log::info!("Restarting application...");
 
     if let Err(e) = app.emit("app-restarting", ()) {
-        log::error!("Failed to emit app-restarting event: {}", e);
+        log::error!("Failed to emit app-restarting event: {e}");
     }
 
     tokio::time::sleep(Duration::from_millis(500)).await;

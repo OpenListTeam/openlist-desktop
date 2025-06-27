@@ -29,11 +29,11 @@ pub async fn stop_service(_state: State<'_, AppState>) -> Result<bool, String> {
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("http://127.0.0.1:{}/api/v1/service/stop", port))
-        .header("Authorization", format!("Bearer {}", api_key))
+        .post(format!("http://127.0.0.1:{port}/api/v1/service/stop"))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         Ok(true)
     } else {
