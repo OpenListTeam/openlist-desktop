@@ -562,7 +562,7 @@ async fn check_systemd_service_status(
                         }
                         _ => {
                             log::error!("Failed to check if service exists");
-                            Ok("error".to_string());
+                            Ok("error".to_string())
                         }
                     }
                 }

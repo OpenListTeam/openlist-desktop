@@ -27,13 +27,13 @@ if (!getOpenlistArchMap[platformArch]) {
 }
 
 // Rclone version management
-let rcloneVersion = 'v1.70.0'
+let rcloneVersion = 'v1.70.1'
 const rcloneVersionUrl = 'https://github.com/rclone/rclone/releases/latest/download/version.txt'
 
 async function getLatestRcloneVersion() {
   try {
     const response = await fetch(rcloneVersionUrl, getFetchOptions())
-    rcloneVersion = (await response.text()).trim().replace('rclone ', '')
+    rcloneVersion = (await response.text()).trim().replace('rclone ', '') || '1.70.1'
     console.log(`Latest rclone version: ${rcloneVersion}`)
   } catch (error) {
     console.log('Error fetching latest rclone version:', error.message)
@@ -41,7 +41,7 @@ async function getLatestRcloneVersion() {
 }
 
 // openlist version management
-let openlistVersion = 'v4.0.0'
+let openlistVersion = 'v4.0.3'
 
 async function getLatestOpenlistVersion() {
   try {
@@ -50,7 +50,7 @@ async function getLatestOpenlistVersion() {
       getFetchOptions()
     )
     const data = await response.json()
-    openlistVersion = data.tag_name
+    openlistVersion = data.tag_name || 'v4.0.3'
     console.log(`Latest OpenList version: ${openlistVersion}`)
   } catch (error) {
     console.log('Error fetching latest OpenList version:', error.message)
