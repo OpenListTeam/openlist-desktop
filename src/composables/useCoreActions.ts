@@ -14,7 +14,7 @@ export const useCoreActions = () => {
 
   const stopOpenListCore = async () => {
     try {
-      await store.startOpenListCore()
+      await store.stopOpenListCore()
     } catch (error) {
       console.error('Failed to stop service:', error)
       throw error

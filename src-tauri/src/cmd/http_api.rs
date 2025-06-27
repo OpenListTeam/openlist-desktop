@@ -7,9 +7,11 @@ use std::str::FromStr;
 use tauri::State;
 
 #[tauri::command]
-pub async fn get_process_list(state: State<'_, AppState>) -> Result<Vec<ProcessStatus>, String> {
-    let api_key = get_api_key(state);
+pub async fn get_process_list(_state: State<'_, AppState>) -> Result<Vec<ProcessStatus>, String> {
+    let api_key = get_api_key();
     let port = get_server_port();
+    println!("API Key: {}", api_key);
+    println!("Server Port: {}", port);
     let client = reqwest::Client::new();
     let response = client
         .get(format!("http://127.0.0.1:{}/api/v1/processes", port))
@@ -38,8 +40,8 @@ pub async fn get_process_list(state: State<'_, AppState>) -> Result<Vec<ProcessS
 }
 
 #[tauri::command]
-pub async fn start_process(id: String, state: State<'_, AppState>) -> Result<bool, String> {
-    let api_key = get_api_key(state);
+pub async fn start_process(id: String, _state: State<'_, AppState>) -> Result<bool, String> {
+    let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client
@@ -59,8 +61,8 @@ pub async fn start_process(id: String, state: State<'_, AppState>) -> Result<boo
 }
 
 #[tauri::command]
-pub async fn stop_process(id: String, state: State<'_, AppState>) -> Result<bool, String> {
-    let api_key = get_api_key(state);
+pub async fn stop_process(id: String, _state: State<'_, AppState>) -> Result<bool, String> {
+    let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client
@@ -80,8 +82,8 @@ pub async fn stop_process(id: String, state: State<'_, AppState>) -> Result<bool
 }
 
 #[tauri::command]
-pub async fn restart_process(id: String, state: State<'_, AppState>) -> Result<bool, String> {
-    let api_key = get_api_key(state);
+pub async fn restart_process(id: String, _state: State<'_, AppState>) -> Result<bool, String> {
+    let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
     let stop_response = client
@@ -126,9 +128,9 @@ pub async fn restart_process(id: String, state: State<'_, AppState>) -> Result<b
 pub async fn update_process(
     id: String,
     update_config: HashMap<String, String>,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client

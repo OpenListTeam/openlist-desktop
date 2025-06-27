@@ -34,7 +34,7 @@ pub async fn create_and_start_rclone_backend(
 
 #[tauri::command]
 pub async fn create_rclone_backend_process(
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
         get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {}", e))?;
@@ -45,7 +45,7 @@ pub async fn create_rclone_backend_process(
         .map(|p| p.join("rclone.conf"))
         .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
     let log_file_path = log_file_path.join("process_rclone.log");
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
     let config = ProcessConfig {
         id: "rclone_backend".into(),

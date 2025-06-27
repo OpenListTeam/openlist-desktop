@@ -267,7 +267,7 @@ pub async fn rclone_unmount_remote(
 #[tauri::command]
 pub async fn create_rclone_mount_remote_process(
     config: ProcessConfig,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
         get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {}", e))?;
@@ -279,7 +279,7 @@ pub async fn create_rclone_mount_remote_process(
         .map(|p| p.join("rclone.conf"))
         .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
 
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
     let mut args: Vec<String> = vec![
         "mount".into(),

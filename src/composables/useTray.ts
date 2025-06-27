@@ -18,8 +18,6 @@ export const useTray = () => {
   }
 
   const handleTrayServiceAction = async (action: string) => {
-    console.log('Tray core action:', action)
-
     try {
       switch (action) {
         case 'start':

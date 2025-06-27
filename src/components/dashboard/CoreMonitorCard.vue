@@ -157,8 +157,8 @@ const gridColor = computed(() => {
   return document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
 })
 
-const checkServiceHealth = async () => {
-  await store.refreshServiceStatus()
+const checkCoreHealth = async () => {
+  await store.refreshOpenListCoreStatus()
   if (!isCoreRunning.value) {
     dataPoints.value.push({
       timestamp: Date.now(),
@@ -172,7 +172,7 @@ const checkServiceHealth = async () => {
   const startTime = Date.now()
 
   try {
-    await store.refreshServiceStatus()
+    await store.refreshOpenListCoreStatus()
 
     const endTime = Date.now()
     const responseTimeMs = endTime - startTime
@@ -228,7 +228,7 @@ onMounted(async () => {
     startTime.value = Date.now()
   }
 
-  monitoringInterval.value = window.setInterval(checkServiceHealth, (store.settings.app.monitor_interval || 5) * 1000)
+  monitoringInterval.value = window.setInterval(checkCoreHealth, (store.settings.app.monitor_interval || 5) * 1000)
   window.addEventListener('resize', updateChartSize)
 })
 

@@ -10,7 +10,7 @@ use url::Url;
 #[tauri::command]
 pub async fn create_openlist_core_process(
     auto_start: bool,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path = get_openlist_binary_path()
         .map_err(|e| format!("Failed to get OpenList binary path: {}", e))?;
@@ -18,7 +18,7 @@ pub async fn create_openlist_core_process(
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {}", e))?;
     let log_file_path = log_file_path.join("process_openlist_core.log");
 
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
 
     let config = ProcessConfig {

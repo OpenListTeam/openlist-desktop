@@ -24,8 +24,8 @@ pub async fn uninstall_service() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn stop_service(state: State<'_, AppState>) -> Result<bool, String> {
-    let api_key = get_api_key(state);
+pub async fn stop_service(_state: State<'_, AppState>) -> Result<bool, String> {
+    let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
     let response = client
