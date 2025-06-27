@@ -3,47 +3,11 @@ hard_tabs = false
 tab_spaces = 4
 newline_style = "Auto"
 edition = "2024"
-
+use_small_heuristics = "Default"
 reorder_imports = true
 reorder_modules = true
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
-
-use_small_heuristics = "Default"
 remove_nested_parens = true
 merge_derives = true
-use_try_shorthand = true
-use_field_init_shorthand = true
+use_try_shorthand = false
+use_field_init_shorthand = false
 force_explicit_abi = true
-
-fn_single_line = false
-where_single_line = false
-force_multiline_blocks = false
-brace_style = "SameLineWhere"
-
-format_strings = false
-format_macro_matchers = true
-
-normalize_comments = true
-normalize_doc_attributes = false
-wrap_comments = true
-comment_width = 80
-
-trailing_comma = "Vertical"
-trailing_semicolon = true
-
-spaces_around_ranges = false
-binop_separator = "Front"
-chain_width = 60
-
-match_block_trailing_comma = false
-match_arm_blocks = true
-
-control_brace_style = "AlwaysSameLine"
-single_line_if_else_max_width = 50
-
-blank_lines_upper_bound = 1
-blank_lines_lower_bound = 0
-empty_item_single_line = true
-struct_lit_single_line = true
-fn_params_layout = "Tall"

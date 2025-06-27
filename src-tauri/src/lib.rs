@@ -94,10 +94,10 @@ pub fn run() {
     let app_state = AppState::new();
     log::info!("Starting {}...", utils::path::APP_ID);
 
-    unsafe {
-        #[cfg(target_os = "linux")]
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
-    };
+    #[cfg(target_os = "linux")]
+    {
+        unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -175,20 +175,20 @@ pub fn run() {
             utils::init_log::init_log()?;
             utils::path::get_app_config_dir()?;
             let app_state = app.state::<AppState>();
-            if let Err(e) = app_state.init(&app_handle) {
+            if let Err(e) = app_state.init(app_handle) {
                 log::error!("Failed to initialize app state: {}", e);
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("App state initialization failed: {}", e),
-                )));
+                return Err(Box::new(std::io::Error::other(format!(
+                    "App state initialization failed: {}",
+                    e
+                ))));
             }
-            if let Err(e) = tray::create_tray(&app_handle) {
+            if let Err(e) = tray::create_tray(app_handle) {
                 log::error!("Failed to create system tray: {}", e);
             } else {
                 log::info!("System tray created successfully");
             }
 
-            setup_background_update_checker(&app_handle);
+            setup_background_update_checker(app_handle);
 
             if let Some(window) = app.get_webview_window("main") {
                 let app_handle_clone = app_handle.clone();

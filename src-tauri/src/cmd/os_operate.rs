@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::{AppHandle, State};
 
 use crate::cmd::http_api::{get_process_list, start_process, stop_process};
@@ -452,7 +452,7 @@ async fn download_file(url: &str, path: &PathBuf) -> Result<(), String> {
 
 async fn extract_binary(
     archive_path: &PathBuf,
-    extract_dir: &PathBuf,
+    extract_dir: &Path,
     executable_name: &str,
     tool: &str,
 ) -> Result<PathBuf, String> {
@@ -474,7 +474,7 @@ async fn extract_binary(
 
 fn extract_zip(
     archive_path: &PathBuf,
-    extract_dir: &PathBuf,
+    extract_dir: &Path,
     executable_name: &str,
     tool: &str,
 ) -> Result<PathBuf, String> {
@@ -518,7 +518,7 @@ fn extract_zip(
 
 fn extract_tar_gz(
     archive_path: &PathBuf,
-    extract_dir: &PathBuf,
+    extract_dir: &Path,
     executable_name: &str,
     _tool: &str,
 ) -> Result<PathBuf, String> {

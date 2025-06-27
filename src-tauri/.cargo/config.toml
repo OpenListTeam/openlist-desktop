@@ -1,0 +1,16 @@
+
+[target.x86_64-pc-windows-msvc]
+# Windows-specific settings
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.x86_64-unknown-linux-gnu]
+# Linux-specific settings  
+rustflags = ["-C", "link-arg=-Wl,--compress-debug-sections=zlib"]
+
+[target.x86_64-apple-darwin]
+# macOS-specific settings
+rustflags = ["-C", "link-arg=-Wl,-dead_strip"]
+
+[target.aarch64-apple-darwin]
+# macOS ARM-specific settings
+rustflags = ["-C", "link-arg=-Wl,-dead_strip"]

@@ -396,13 +396,12 @@ async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> 
     let mut cmd = Command::new(installer_path);
     cmd.arg("/SILENT");
 
-    tokio::task::spawn_blocking(move || {
+    let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
             .map_err(|e| format!("Failed to start Windows installer: {}", e))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?
-    .map_err(|e| e)?;
+    .map_err(|e| format!("Task error: {}", e))?;
 
     Ok(())
 }
@@ -413,13 +412,12 @@ async fn install_macos_update(installer_path: &PathBuf) -> Result<(), String> {
     let mut cmd = Command::new("open");
     cmd.arg(installer_path);
 
-    tokio::task::spawn_blocking(move || {
+    let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
-            .map_err(|e| format!("Failed to start macOS installer: {}", e))
+            .map_err(|e| format!("Failed to start macOS installer: {e}"))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?
-    .map_err(|e| e)?;
+    .map_err(|e| format!("Task error: {e}"))?;
 
     Ok(())
 }
@@ -450,13 +448,12 @@ async fn install_linux_update(installer_path: &PathBuf) -> Result<(), String> {
         }
     };
 
-    tokio::task::spawn_blocking(move || {
+    let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
             .map_err(|e| format!("Failed to start Linux installer: {}", e))
     })
     .await
-    .map_err(|e| format!("Task error: {}", e))?
-    .map_err(|e| e)?;
+    .map_err(|e| format!("Task error: {}", e))?;
 
     Ok(())
 }

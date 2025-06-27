@@ -26,8 +26,8 @@ pub async fn get_binary_version(binary_name: Option<String>) -> Result<String, S
             .split_whitespace()
             .nth(1)
             .ok_or("Failed to parse version")?;
-        return Ok(version.to_string());
+        Ok(version.to_string())
     } else {
-        return Err("Failed to get OpenList binary version".to_string());
+        Err("Failed to get OpenList binary version".to_string())
     }
 }

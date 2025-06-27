@@ -1,0 +1,9 @@
+# Clippy configuration for consistent linting across platforms
+
+# Deny warnings that should be errors
+cognitive-complexity-threshold = 30
+too-many-arguments-threshold = 7
+type-complexity-threshold = 250
+
+# Allow some clippy lints that are too noisy
+avoid-breaking-exported-api = false

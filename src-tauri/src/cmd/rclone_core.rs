@@ -114,7 +114,7 @@ async fn is_rclone_running() -> bool {
     let client = Client::new();
 
     let response = client
-        .get(&format!("{}/", RCLONE_API_BASE))
+        .get(format!("{RCLONE_API_BASE}/"))
         .timeout(Duration::from_secs(1))
         .send()
         .await;

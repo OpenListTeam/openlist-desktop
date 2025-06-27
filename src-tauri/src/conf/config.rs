@@ -78,12 +78,10 @@ impl MergedSettings {
             serde_json::from_str(&config).map_err(|e| e.to_string())?
         };
 
-        if let Ok(data_port) = Self::get_port_from_data_config() {
-            if let Some(port) = data_port {
-                if merged_settings.openlist.port != port {
-                    merged_settings.openlist.port = port;
-                    merged_settings.save()?;
-                }
+        if let Ok(Some(port)) = Self::get_port_from_data_config() {
+            if merged_settings.openlist.port != port {
+                merged_settings.openlist.port = port;
+                merged_settings.save()?;
             }
         }
 

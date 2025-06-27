@@ -53,7 +53,7 @@ pub fn get_server_port() -> u16 {
     env::var("PROCESS_MANAGER_PORT")
         .ok()
         .and_then(|port_str| port_str.parse().ok())
-        .unwrap_or_else(|| DEFAULT_HTTP_SERVER_PORT)
+        .unwrap_or(DEFAULT_HTTP_SERVER_PORT)
 }
 
 pub fn get_api_key() -> String {

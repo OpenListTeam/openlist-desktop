@@ -185,7 +185,7 @@ fn start_service_with_elevation(service_name: &str) -> Result<bool, Box<dyn std:
         _ => {
             log::info!("Already have admin privileges, running directly");
             StdCommand::new("powershell.exe")
-                .args(&["-Command", &powershell_cmd])
+                .args(["-Command", &powershell_cmd])
                 .creation_flags(0x08000000)
                 .status()?
         }
@@ -458,16 +458,14 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
     };
     match service.query_status() {
         Ok(status) => match status.current_state {
-            ServiceState::Running | ServiceState::StartPending => {
-                return Ok("running".to_string());
-            }
+            ServiceState::Running | ServiceState::StartPending => Ok("running".to_string()),
             ServiceState::StopPending => {
                 std::thread::sleep(std::time::Duration::from_millis(1000));
-                return Ok("stopped".to_string());
+                Ok("stopped".to_string())
             }
             _ => {
                 log::info!("Service is in state: {:?}.", status.current_state);
-                return Ok("stopped".to_string());
+                Ok("stopped".to_string())
             }
         },
         Err(e) => {
