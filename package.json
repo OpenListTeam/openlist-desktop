@@ -85,6 +85,8 @@
     "eslint-plugin-unicorn": "^59.0.1",
     "fs-extra": "^11.3.0",
     "https-proxy-agent": "^7.0.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "node-bump-version": "^2.0.0",
     "node-fetch": "^3.3.2",
     "tar": "^7.4.3",

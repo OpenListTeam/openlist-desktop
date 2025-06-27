@@ -594,7 +594,7 @@ async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::
             log::info!("Using {elevator} for elevation");
 
             StdCommand::new(&elevator)
-                .args(&["systemctl", "start", service_name])
+                .args(["systemctl", "start", service_name])
                 .status()?
         }
     };
@@ -716,7 +716,7 @@ pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
     log::info!("Checking macOS service status for: {SERVICE_IDENTIFIER}");
 
     let status_output = StdCommand::new("launchctl")
-        .args(&["list", SERVICE_IDENTIFIER])
+        .args(["list", SERVICE_IDENTIFIER])
         .output();
 
     match status_output {
@@ -757,7 +757,7 @@ pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
                 let stderr_str = String::from_utf8_lossy(&output.stderr);
                 if stderr_str.contains("Could not find service") {
                     log::error!("Service {SERVICE_IDENTIFIER} is not loaded");
-                    return Ok(false);
+                    Ok(false)
                 } else {
                     log::warn!("launchctl list failed, attempting to start service anyway");
                     return start_macos_service(SERVICE_IDENTIFIER).await;
@@ -778,14 +778,14 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
     log::info!("Checking macOS service status for: {SERVICE_IDENTIFIER}");
 
     let status_output = StdCommand::new("launchctl")
-        .args(&["list", SERVICE_IDENTIFIER])
+        .args(["list", SERVICE_IDENTIFIER])
         .output();
 
     match status_output {
         Ok(output) => {
             if output.status.success() {
                 let output_str = String::from_utf8_lossy(&output.stdout);
-                log::info!("launchctl list output: {}", output_str);
+                log::info!("launchctl list output: {output_str}");
 
                 if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
                     log::info!("Extracted PID value: {pid_value}");
@@ -810,7 +810,7 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
                 }
 
                 log::info!("Service appears to be loaded but status unclear");
-                return Ok("error".to_string());
+                Ok("error".to_string())
             } else {
                 let stderr_str = String::from_utf8_lossy(&output.stderr);
                 if stderr_str.contains("Could not find service") {
@@ -834,7 +834,7 @@ async fn start_macos_service(service_identifier: &str) -> Result<bool, Box<dyn s
     log::info!("Attempting to start macOS service: {service_identifier}");
 
     let status = StdCommand::new("launchctl")
-        .args(&["start", service_identifier])
+        .args(["start", service_identifier])
         .status()?;
 
     if status.success() {
@@ -842,7 +842,7 @@ async fn start_macos_service(service_identifier: &str) -> Result<bool, Box<dyn s
         std::thread::sleep(std::time::Duration::from_millis(2000));
 
         let verify_output = StdCommand::new("launchctl")
-            .args(&["list", service_identifier])
+            .args(["list", service_identifier])
             .output()?;
 
         if verify_output.status.success() {
@@ -886,8 +886,8 @@ fn extract_plist_value(plist_output: &str, key: &str) -> Option<String> {
                 let value_part = &trimmed[equals_pos + 1..];
                 let value_trimmed = value_part.trim();
 
-                let value_clean = if value_trimmed.ends_with(';') {
-                    &value_trimmed[..value_trimmed.len() - 1]
+                let value_clean = if let Some(stripped) = value_trimmed.strip_suffix(';') {
+                    stripped
                 } else {
                     value_trimmed
                 };
