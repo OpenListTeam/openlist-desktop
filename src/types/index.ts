@@ -73,7 +73,7 @@ export interface MergedSettings {
   app: AppConfig
 }
 
-export interface ServiceStatus {
+export interface OpenListCoreStatus {
   running: boolean
   pid?: number
   port?: number
@@ -94,7 +94,7 @@ export interface FileItem {
 }
 
 export interface AppState {
-  serviceStatus: ServiceStatus
+  serviceStatus: OpenListCoreStatus
   mountStatus: MountStatus
   logs: string[]
   settings: MergedSettings

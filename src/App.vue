@@ -51,7 +51,7 @@ onMounted(async () => {
   try {
     store.init()
     store.applyTheme(store.settings.app.theme || 'light')
-    await updateTrayMenu(store.serviceStatus.running)
+    await updateTrayMenu(store.openlistCoreStatus.running)
 
     try {
       updateUnlisten = await TauriAPI.listenToBackgroundUpdateAvailable(updateInfo => {

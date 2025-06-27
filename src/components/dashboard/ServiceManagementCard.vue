@@ -22,7 +22,7 @@
             @click="installService"
             :disabled="actionLoading || serviceStatus === 'installed'"
             class="action-btn install-btn"
-            v-if="serviceStatus !== 'running'"
+            v-if="serviceStatus !== 'running' && serviceStatus !== 'stopped'"
           >
             <component :is="actionLoading && currentAction === 'install' ? LoaderIcon : Download" :size="16" />
             <span>{{
@@ -31,17 +31,31 @@
                 : t('dashboard.serviceManagement.install')
             }}</span>
           </button>
+
           <button
             @click="startService"
-            :disabled="actionLoading || serviceStatus !== 'installed'"
+            :disabled="actionLoading || (serviceStatus !== 'installed' && serviceStatus !== 'stopped')"
             class="action-btn start-btn"
-            v-if="serviceStatus === 'installed'"
+            v-if="serviceStatus === 'installed' || serviceStatus === 'stopped'"
           >
             <component :is="actionLoading && currentAction === 'start' ? LoaderIcon : Play" :size="16" />
             <span>{{
               actionLoading && currentAction === 'start' ? t('common.loading') : t('dashboard.serviceManagement.start')
             }}</span>
           </button>
+
+          <button
+            @click="stopService"
+            :disabled="actionLoading"
+            class="action-btn stop-btn"
+            v-if="serviceStatus === 'running'"
+          >
+            <component :is="actionLoading && currentAction === 'stop' ? LoaderIcon : Stop" :size="16" />
+            <span>{{
+              actionLoading && currentAction === 'stop' ? t('common.loading') : t('dashboard.serviceManagement.stop')
+            }}</span>
+          </button>
+
           <button
             @click="showUninstallDialog = true"
             :disabled="actionLoading"
@@ -75,7 +89,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useTranslation } from '../../composables/useI18n'
-import { Download, Play, Trash2, Loader2 as LoaderIcon, CheckCircle2, XCircle, Circle, Server } from 'lucide-vue-next'
+import {
+  Download,
+  Play,
+  Square as Stop,
+  Trash2,
+  Loader2 as LoaderIcon,
+  CheckCircle2,
+  XCircle,
+  Circle,
+  Server
+} from 'lucide-vue-next'
 import Card from '../ui/Card.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
 import { TauriAPI } from '../../api/tauri'
@@ -87,7 +111,7 @@ const store = useAppStore()
 const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
 
-const serviceStatus = ref<'not-installed' | 'installed' | 'running' | 'error'>('not-installed')
+const serviceStatus = ref<'not-installed' | 'installed' | 'running' | 'error' | 'stopped'>('not-installed')
 const actionLoading = ref(false)
 const currentAction = ref('')
 const showUninstallDialog = ref(false)
@@ -101,6 +125,7 @@ const statusClass = computed(() => {
     case 'installed':
       return 'status-installed'
     case 'error':
+    case 'stopped':
       return 'status-error'
     default:
       return 'status-not-installed'
@@ -115,6 +140,8 @@ const statusText = computed(() => {
       return t('dashboard.serviceManagement.status.installed')
     case 'error':
       return t('dashboard.serviceManagement.status.error')
+    case 'stopped':
+      return t('dashboard.serviceManagement.status.stopped')
     default:
       return t('dashboard.serviceManagement.status.notInstalled')
   }
@@ -128,6 +155,8 @@ const statusIcon = computed(() => {
       return Circle
     case 'error':
       return XCircle
+    case 'stopped':
+      return Stop
     default:
       return Server
   }
@@ -136,12 +165,12 @@ const statusIcon = computed(() => {
 const checkServiceStatus = async () => {
   try {
     const status = await TauriAPI.checkServiceStatus()
-    serviceStatus.value = status ? 'running' : 'not-installed'
+    serviceStatus.value = status as 'not-installed' | 'installed' | 'running' | 'error' | 'stopped'
     return status
   } catch (error) {
     console.error('Failed to check service status:', error)
     serviceStatus.value = 'error'
-    return false
+    return 'error'
   }
 }
 
@@ -155,8 +184,8 @@ const installService = async () => {
     }
     await new Promise(resolve => setTimeout(resolve, 5000))
     const status = await checkServiceStatus()
-    if (!status) {
-      throw new Error('Service installation did not start correctly')
+    if (status !== 'installed' && status !== 'running' && status !== 'stopped') {
+      throw new Error('Service installation did not complete successfully')
     }
     try {
       await TauriAPI.createAndStartRcloneBackend()
@@ -181,9 +210,26 @@ const startService = async () => {
       throw new Error('Service start failed')
     }
     serviceStatus.value = 'running'
-    console.log('Service started successfully')
   } catch (error) {
     console.error('Failed to start service:', error)
+    serviceStatus.value = 'error'
+  } finally {
+    actionLoading.value = false
+    currentAction.value = ''
+  }
+}
+
+const stopService = async () => {
+  actionLoading.value = true
+  currentAction.value = 'stop'
+  try {
+    const result = await TauriAPI.stopOpenListService()
+    if (!result) {
+      throw new Error('Service stop failed')
+    }
+    await checkServiceStatus()
+  } catch (error) {
+    console.error('Failed to stop service:', error)
     serviceStatus.value = 'error'
   } finally {
     actionLoading.value = false

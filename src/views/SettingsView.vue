@@ -20,6 +20,10 @@ const openlistCoreSettings = reactive({ ...store.settings.openlist })
 const rcloneSettings = reactive({ ...store.settings.rclone })
 const appSettings = reactive({ ...store.settings.app })
 
+const isOpenListPortChanged = computed(() => {
+  return openlistCoreSettings.port !== store.settings.openlist.port
+})
+
 watch(autoStartApp, async newValue => {
   if (newValue) {
     await enable()

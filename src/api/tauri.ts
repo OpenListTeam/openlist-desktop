@@ -6,18 +6,18 @@ import {
   DownloadProgress,
   FileItem,
   MergedSettings,
+  OpenListCoreStatus,
   ProcessConfig,
   ProcessStatus,
   RcloneMountInfo,
   RcloneWebdavConfig,
-  ServiceStatus,
   TauriResponse,
   UpdateCheck
 } from '../types'
 
 export class TauriAPI {
   // openlist desktop service management
-  static async checkServiceStatus(): Promise<boolean> {
+  static async checkServiceStatus(): Promise<string> {
     return await invoke('check_service_status')
   }
 
@@ -35,10 +35,6 @@ export class TauriAPI {
 
   static async stopOpenListService(): Promise<boolean> {
     return await invoke('stop_service')
-  }
-
-  static async restartOpenListService(): Promise<boolean> {
-    return await invoke('restart_service')
   }
 
   // http API management
@@ -68,7 +64,7 @@ export class TauriAPI {
     return await invoke('create_openlist_core_process', { autoStart })
   }
 
-  static async getOpenListCoreStatus(): Promise<ServiceStatus> {
+  static async getOpenListCoreStatus(): Promise<OpenListCoreStatus> {
     return await invoke('get_openlist_core_status')
   }
 
@@ -229,7 +225,7 @@ export class TauriAPI {
 
   // Tray event listeners
   static async listenToTrayServiceActions(callback: (action: string) => void) {
-    return await listen('tray-service-action', event => {
+    return await listen('tray-core-action', event => {
       callback(event.payload as string)
     })
   }

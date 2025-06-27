@@ -15,21 +15,31 @@ pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
     let hide_i = MenuItem::with_id(app_handle, "hide", "隐藏窗口", true, None::<&str>)?;
     let restart_i = MenuItem::with_id(app_handle, "restart", "重启应用", true, None::<&str>)?;
 
-    let start_service_i =
-        MenuItem::with_id(app_handle, "start_service", "启动服务", true, None::<&str>)?;
-    let stop_service_i =
-        MenuItem::with_id(app_handle, "stop_service", "停止服务", true, None::<&str>)?;
+    let start_service_i = MenuItem::with_id(
+        app_handle,
+        "start_service",
+        "启动OpenList",
+        true,
+        None::<&str>,
+    )?;
+    let stop_service_i = MenuItem::with_id(
+        app_handle,
+        "stop_service",
+        "停止OpenList",
+        true,
+        None::<&str>,
+    )?;
     let restart_service_i = MenuItem::with_id(
         app_handle,
         "restart_service",
-        "重启服务",
+        "重启OpenList",
         true,
         None::<&str>,
     )?;
     let service_submenu = Submenu::with_id_and_items(
         app_handle,
         "service",
-        "服务控制",
+        "核心控制",
         true,
         &[&start_service_i, &stop_service_i, &restart_service_i],
     )?;
@@ -113,15 +123,15 @@ fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
         }
         "start_service" => {
             log::info!("Start service menu item clicked");
-            handle_service_action(app_handle, "start");
+            handle_core_action(app_handle, "start");
         }
         "stop_service" => {
             log::info!("Stop service menu item clicked");
-            handle_service_action(app_handle, "stop");
+            handle_core_action(app_handle, "stop");
         }
         "restart_service" => {
             log::info!("Restart service menu item clicked");
-            handle_service_action(app_handle, "restart");
+            handle_core_action(app_handle, "restart");
         }
         _ => {
             log::debug!("Unknown menu item clicked: {:?}", event.id());
@@ -144,21 +154,21 @@ pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri:
         let start_service_i = MenuItem::with_id(
             app_handle,
             "start_service",
-            "启动服务",
+            "启动OpenList",
             !service_running,
             None::<&str>,
         )?;
         let stop_service_i = MenuItem::with_id(
             app_handle,
             "stop_service",
-            "停止服务",
+            "停止OpenList",
             service_running,
             None::<&str>,
         )?;
         let restart_service_i = MenuItem::with_id(
             app_handle,
             "restart_service",
-            "重启服务",
+            "重启OpenList",
             service_running,
             None::<&str>,
         )?;
@@ -166,7 +176,7 @@ pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri:
         let service_submenu = Submenu::with_id_and_items(
             app_handle,
             "service",
-            "服务控制",
+            "核心控制",
             true,
             &[&start_service_i, &stop_service_i, &restart_service_i],
         )?;
@@ -212,14 +222,14 @@ pub fn update_tray_menu_delayed(
     Ok(())
 }
 
-fn handle_service_action(app_handle: &AppHandle, action: &str) {
-    log::info!("Handling service action from tray: {}", action);
+fn handle_core_action(app_handle: &AppHandle, action: &str) {
+    log::info!("Handling core action from tray: {}", action);
 
-    if let Err(e) = app_handle.emit("tray-service-action", action) {
-        log::error!("Failed to emit tray service action event: {}", e);
+    if let Err(e) = app_handle.emit("tray-core-action", action) {
+        log::error!("Failed to emit tray core action event: {}", e);
     }
 
-    log::debug!("Service action '{}' dispatched to frontend", action);
+    log::debug!("Core action '{}' dispatched to frontend", action);
 }
 
 pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri::Result<()> {
@@ -227,21 +237,21 @@ pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> 
         let start_service_i = MenuItem::with_id(
             app_handle,
             "start_service",
-            "启动服务",
+            "启动OpenList",
             !service_running,
             None::<&str>,
         )?;
         let stop_service_i = MenuItem::with_id(
             app_handle,
             "stop_service",
-            "停止服务",
+            "停止OpenList",
             service_running,
             None::<&str>,
         )?;
         let restart_service_i = MenuItem::with_id(
             app_handle,
             "restart_service",
-            "重启服务",
+            "重启OpenList",
             service_running,
             None::<&str>,
         )?;
@@ -249,7 +259,7 @@ pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> 
         let service_submenu = Submenu::with_id_and_items(
             app_handle,
             "service",
-            "服务控制",
+            "核心控制",
             true,
             &[&start_service_i, &stop_service_i, &restart_service_i],
         )?;

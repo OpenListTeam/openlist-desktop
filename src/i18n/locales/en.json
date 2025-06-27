@@ -23,8 +23,8 @@
       "openlistService": "OpenList Core",
       "rclone": "RClone",
       "quickSettings": "Quick Settings",
-      "startService": "Start Core",
-      "stopService": "Stop Core",
+      "startOpenListCore": "Start Core",
+      "stopOpenListCore": "Stop Core",
       "restart": "Restart",
       "openWeb": "Web UI",
       "configRclone": "Configure RClone",
@@ -86,6 +86,7 @@
         "running": "Running",
         "installed": "Installed",
         "notInstalled": "Not Installed",
+        "stopped": "Stopped",
         "error": "Error"
       },
       "confirmUninstall": {

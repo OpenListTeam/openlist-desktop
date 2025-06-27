@@ -2,10 +2,10 @@ import { onMounted, onUnmounted } from 'vue'
 
 import { TauriAPI } from '../api/tauri'
 import { useAppStore } from '../stores/app'
-import { useServiceActions } from './useServiceActions'
+import { useCoreActions } from './useCoreActions'
 
 export const useTray = () => {
-  const { startService, stopService, restartService } = useServiceActions()
+  const { startOpenListCore, stopOpenListCore, restartOpenListCore } = useCoreActions()
   const store = useAppStore()
 
   let unlistenTrayActions: (() => void) | null = null
@@ -16,27 +16,28 @@ export const useTray = () => {
       console.error('Failed to update tray menu:', error)
     }
   }
+
   const handleTrayServiceAction = async (action: string) => {
-    console.log('Tray service action:', action)
+    console.log('Tray core action:', action)
 
     try {
       switch (action) {
         case 'start':
-          await startService()
+          await startOpenListCore()
           setTimeout(async () => {
-            await updateTrayMenu(store.serviceStatus.running)
+            await updateTrayMenu(store.openlistCoreStatus.running)
           }, 5000)
           break
         case 'stop':
-          await stopService()
+          await stopOpenListCore()
           setTimeout(async () => {
-            await updateTrayMenu(store.serviceStatus.running)
+            await updateTrayMenu(store.openlistCoreStatus.running)
           }, 5000)
           break
         case 'restart':
-          await restartService()
+          await restartOpenListCore()
           setTimeout(async () => {
-            await updateTrayMenu(store.serviceStatus.running)
+            await updateTrayMenu(store.openlistCoreStatus.running)
           }, 5000)
           break
         default:
@@ -45,7 +46,7 @@ export const useTray = () => {
     } catch (error) {
       console.error(`Failed to execute tray action '${action}':`, error)
       setTimeout(async () => {
-        await updateTrayMenu(store.serviceStatus.running)
+        await updateTrayMenu(store.openlistCoreStatus.running)
       }, 3000)
     }
   }
@@ -53,7 +54,7 @@ export const useTray = () => {
     try {
       unlistenTrayActions = await TauriAPI.listenToTrayServiceActions(handleTrayServiceAction)
 
-      await TauriAPI.forceUpdateTrayMenu(store.serviceStatus.running)
+      await TauriAPI.forceUpdateTrayMenu(store.openlistCoreStatus.running)
       console.log('Tray listeners initialized and menu updated')
     } catch (error) {
       console.error('Failed to initialize tray listeners:', error)

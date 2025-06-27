@@ -34,8 +34,7 @@ use cmd::http_api::{
 };
 
 use cmd::service::{
-    check_service_status, install_service, restart_service, start_service, stop_service,
-    uninstall_service,
+    check_service_status, install_service, start_service, stop_service, uninstall_service,
 };
 
 use object::structs::*;
@@ -160,7 +159,6 @@ pub fn run() {
             check_service_status,
             stop_service,
             start_service,
-            restart_service,
             check_for_updates,
             download_update,
             install_update_and_restart,

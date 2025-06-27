@@ -107,24 +107,26 @@ const serviceButtonIcon = computed(() => {
 
 const serviceButtonText = computed(() => {
   if (loading.value) return t('dashboard.quickActions.processing')
-  return isCoreRunning.value ? t('dashboard.quickActions.stopService') : t('dashboard.quickActions.startService')
+  return isCoreRunning.value
+    ? t('dashboard.quickActions.stopOpenListCore')
+    : t('dashboard.quickActions.startOpenListCore')
 })
 
 const toggleCore = async () => {
   if (isCoreRunning.value) {
-    await store.stopService()
+    await store.stopOpenListCore()
   } else {
-    await store.startService()
+    await store.startOpenListCore()
   }
 }
 
 const restartCore = async () => {
-  await store.restartService()
+  await store.restartOpenListCore()
 }
 
 const openWebUI = () => {
-  if (store.serviceUrl) {
-    window.open(store.serviceUrl, '_blank')
+  if (store.openListCoreUrl) {
+    window.open(store.openListCoreUrl, '_blank')
   }
 }
 

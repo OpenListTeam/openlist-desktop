@@ -23,8 +23,8 @@
       "openlistService": "OpenList 核心",
       "rclone": "RClone",
       "quickSettings": "快速设置",
-      "startService": "启动核心",
-      "stopService": "停止核心",
+      "startOpenListCore": "启动核心",
+      "stopOpenListCore": "停止核心",
       "restart": "重启",
       "openWeb": "网页界面",
       "configRclone": "配置 RClone",
@@ -86,6 +86,7 @@
         "running": "运行中",
         "installed": "已安装",
         "notInstalled": "未安装",
+        "stopped": "已停止",
         "error": "错误"
       },
       "confirmUninstall": {

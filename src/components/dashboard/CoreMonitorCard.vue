@@ -13,7 +13,7 @@
         <div class="metrics" v-if="isCoreRunning">
           <span class="metric info">
             <Globe :size="14" />
-            Port: {{ serviceStatus.port || 5244 }}
+            Port: {{ openlistCoreStatus.port || 5244 }}
           </span>
           <span class="metric info">
             <Activity :size="14" />
@@ -98,7 +98,7 @@ const tooltip = ref({
 })
 
 const isCoreRunning = computed(() => store.isCoreRunning)
-const serviceStatus = computed(() => store.serviceStatus)
+const openlistCoreStatus = computed(() => store.openlistCoreStatus)
 
 const avgResponseTime = computed(() => {
   if (dataPoints.value.length === 0) return 0

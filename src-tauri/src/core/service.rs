@@ -203,63 +203,8 @@ fn start_service_with_elevation(service_name: &str) -> Result<bool, Box<dyn std:
     }
 }
 
-#[cfg(not(target_os = "windows"))]
-pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
-    log::info!("Service start not implemented for this platform");
-    Ok(false)
-}
-
-#[cfg(target_os = "macos")]
-pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
-    let app_dir = env::current_exe()?.parent().unwrap().to_path_buf();
-    let install_path = app_dir.join("install-openlist-service");
-
-    if !install_path.exists() {
-        error!("Service installer not found at {}", install_path.display());
-        return Err(Box::from(format!(
-            "Service installer not found at {}",
-            install_path.display()
-        )));
-    }
-
-    let status = StdCommand::new(&install_path).status()?;
-
-    if status.success() {
-        Ok(true)
-    } else {
-        Err(Box::from(format!(
-            "Failed to install service, exit status: {}",
-            status
-        )))
-    }
-}
-
-#[cfg(target_os = "macos")]
-pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
-    let app_dir = env::current_exe()?.parent().unwrap().to_path_buf();
-    let uninstall_path = app_dir.join("uninstall-openlist-service");
-
-    if !uninstall_path.exists() {
-        error!("Uninstaller not found: {:?}", uninstall_path);
-        return Err(Box::from(format!(
-            "Uninstaller not found: {:?}",
-            uninstall_path
-        )));
-    }
-    let status = StdCommand::new(&uninstall_path).status()?;
-
-    if status.success() {
-        Ok(true)
-    } else {
-        Err(Box::from(format!(
-            "Failed to uninstall service, exit status: {}",
-            status
-        )))
-    }
-}
-
 #[cfg(target_os = "windows")]
-pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> {
+pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
     use windows_service::service::{ServiceAccess, ServiceState};
     use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
     let service_name = "openlist_desktop_service";
@@ -325,7 +270,7 @@ pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> 
 }
 
 #[cfg(target_os = "linux")]
-pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> {
+pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
     const SERVICE_NAME: &str = "openlist-desktop-service";
 
     log::info!("Checking Linux service status for: {}", SERVICE_NAME);
@@ -333,42 +278,17 @@ pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> 
     let init_system = detect_linux_init_system();
 
     match init_system.as_str() {
-        "systemd" => check_systemd_service_status(SERVICE_NAME).await,
-        "openrc" => check_openrc_service_status(SERVICE_NAME).await,
+        "systemd" => start_systemd_service_with_check(SERVICE_NAME).await,
+        "openrc" => start_openrc_service_with_check(SERVICE_NAME).await,
         _ => {
             log::warn!("Unknown init system: {}, assuming systemd", init_system);
-            check_systemd_service_status(SERVICE_NAME).await
+            start_systemd_service_with_check(SERVICE_NAME).await
         }
     }
 }
 
 #[cfg(target_os = "linux")]
-fn detect_linux_init_system() -> String {
-    if std::path::Path::new("/run/systemd/system").exists() {
-        return "systemd".to_string();
-    }
-
-    if std::path::Path::new("/run/openrc").exists() {
-        return "openrc".to_string();
-    }
-
-    if let Ok(output) = StdCommand::new("which").arg("systemctl").output() {
-        if output.status.success() && !output.stdout.is_empty() {
-            return "systemd".to_string();
-        }
-    }
-
-    if let Ok(output) = StdCommand::new("which").arg("rc-service").output() {
-        if output.status.success() && !output.stdout.is_empty() {
-            return "openrc".to_string();
-        }
-    }
-
-    "systemd".to_string()
-}
-
-#[cfg(target_os = "linux")]
-async fn check_systemd_service_status(
+async fn start_systemd_service_with_check(
     service_name: &str,
 ) -> Result<bool, Box<dyn std::error::Error>> {
     log::info!("Checking systemd service status for: {}", service_name);
@@ -430,6 +350,249 @@ async fn check_systemd_service_status(
 }
 
 #[cfg(target_os = "linux")]
+async fn start_openrc_service_with_check(
+    service_name: &str,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    log::info!("Checking OpenRC service status for: {}", service_name);
+
+    let status_output = StdCommand::new("rc-service")
+        .args(&[service_name, "status"])
+        .output();
+
+    match status_output {
+        Ok(output) => {
+            let status_str = String::from_utf8_lossy(&output.stdout).to_lowercase();
+            let stderr_str = String::from_utf8_lossy(&output.stderr).to_lowercase();
+
+            log::info!("OpenRC service status output: {}", status_str);
+
+            if status_str.contains("started") || status_str.contains("running") {
+                log::info!("Service is running");
+                return Ok(true);
+            } else if status_str.contains("stopped") || status_str.contains("inactive") {
+                log::info!("Service is stopped, attempting to start");
+                return start_openrc_service(service_name).await;
+            } else if stderr_str.contains("does not exist") {
+                log::error!("Service {} does not exist", service_name);
+                return Ok(false);
+            } else {
+                log::warn!("Unknown service status, attempting to start");
+                return start_openrc_service(service_name).await;
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to check OpenRC service status: {}", e);
+            return start_openrc_service(service_name).await;
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
+    let app_dir = env::current_exe()?.parent().unwrap().to_path_buf();
+    let install_path = app_dir.join("install-openlist-service");
+
+    if !install_path.exists() {
+        error!("Service installer not found at {}", install_path.display());
+        return Err(Box::from(format!(
+            "Service installer not found at {}",
+            install_path.display()
+        )));
+    }
+
+    let status = StdCommand::new(&install_path).status()?;
+
+    if status.success() {
+        Ok(true)
+    } else {
+        Err(Box::from(format!(
+            "Failed to install service, exit status: {}",
+            status
+        )))
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
+    let app_dir = env::current_exe()?.parent().unwrap().to_path_buf();
+    let uninstall_path = app_dir.join("uninstall-openlist-service");
+
+    if !uninstall_path.exists() {
+        error!("Uninstaller not found: {:?}", uninstall_path);
+        return Err(Box::from(format!(
+            "Uninstaller not found: {:?}",
+            uninstall_path
+        )));
+    }
+    let status = StdCommand::new(&uninstall_path).status()?;
+
+    if status.success() {
+        Ok(true)
+    } else {
+        Err(Box::from(format!(
+            "Failed to uninstall service, exit status: {}",
+            status
+        )))
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>> {
+    use windows_service::service::{ServiceAccess, ServiceState};
+    use windows_service::service_manager::{ServiceManager, ServiceManagerAccess};
+    let service_name = "openlist_desktop_service";
+
+    let manager = match ServiceManager::local_computer(
+        None::<&str>,
+        ServiceManagerAccess::CONNECT | ServiceManagerAccess::ENUMERATE_SERVICE,
+    ) {
+        Ok(mgr) => mgr,
+        Err(_) => ServiceManager::local_computer(None::<&str>, ServiceManagerAccess::CONNECT)?,
+    };
+    let service = match manager.open_service(service_name, ServiceAccess::QUERY_STATUS) {
+        Ok(svc) => svc,
+        Err(e) => {
+            log::error!("Failed to open service '{}': {:?}", service_name, e);
+            return Ok("not-installed".to_string());
+        }
+    };
+    match service.query_status() {
+        Ok(status) => match status.current_state {
+            ServiceState::Running | ServiceState::StartPending => {
+                return Ok("running".to_string());
+            }
+            ServiceState::StopPending => {
+                std::thread::sleep(std::time::Duration::from_millis(1000));
+                return Ok("stopped".to_string());
+            }
+            _ => {
+                log::info!("Service is in state: {:?}.", status.current_state);
+                return Ok("stopped".to_string());
+            }
+        },
+        Err(e) => {
+            log::error!("Failed to query service status: {:?}", e);
+            match start_service_with_elevation(service_name) {
+                Ok(true) => Ok("running".to_string()),
+                Ok(false) => {
+                    log::error!("Failed to start service with elevation.");
+                    Ok("stopped".to_string())
+                }
+                Err(elev_err) => {
+                    log::error!("Error during service elevation: {:?}", elev_err);
+                    Ok("error".to_string())
+                }
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>> {
+    const SERVICE_NAME: &str = "openlist-desktop-service";
+
+    log::info!("Checking Linux service status for: {}", SERVICE_NAME);
+
+    let init_system = detect_linux_init_system();
+
+    match init_system.as_str() {
+        "systemd" => check_systemd_service_status(SERVICE_NAME).await,
+        "openrc" => check_openrc_service_status(SERVICE_NAME).await,
+        _ => {
+            log::warn!("Unknown init system: {}, assuming systemd", init_system);
+            check_systemd_service_status(SERVICE_NAME).await
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn detect_linux_init_system() -> String {
+    if std::path::Path::new("/run/systemd/system").exists() {
+        return "systemd".to_string();
+    }
+
+    if std::path::Path::new("/run/openrc").exists() {
+        return "openrc".to_string();
+    }
+
+    if let Ok(output) = StdCommand::new("which").arg("systemctl").output() {
+        if output.status.success() && !output.stdout.is_empty() {
+            return "systemd".to_string();
+        }
+    }
+
+    if let Ok(output) = StdCommand::new("which").arg("rc-service").output() {
+        if output.status.success() && !output.stdout.is_empty() {
+            return "openrc".to_string();
+        }
+    }
+
+    "systemd".to_string()
+}
+
+#[cfg(target_os = "linux")]
+async fn check_systemd_service_status(
+    service_name: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    log::info!("Checking systemd service status for: {}", service_name);
+
+    let status_output = StdCommand::new("systemctl")
+        .args(&["is-active", service_name])
+        .output();
+
+    match status_output {
+        Ok(output) => {
+            let status = String::from_utf8_lossy(&output.stdout)
+                .trim()
+                .to_lowercase();
+            log::info!("Service {} status: {}", service_name, status);
+
+            match status.as_str() {
+                "active" | "activating" => {
+                    log::info!("Service is active and running");
+                    return Ok("running".to_string());
+                }
+                "inactive" | "failed" => {
+                    log::info!("Service is {}", status);
+                    return Ok("stopped".to_string());
+                }
+                "unknown" => {
+                    log::warn!("Service status unknown, checking if service exists");
+                    let exists_output = StdCommand::new("systemctl")
+                        .args(&["list-unit-files", &format!("{}.service", service_name)])
+                        .output();
+
+                    match exists_output {
+                        Ok(output) if output.status.success() => {
+                            let output_str = String::from_utf8_lossy(&output.stdout);
+                            if output_str.contains(service_name) {
+                                log::info!("Service exists and not active");
+                                return Ok("stopped".to_string());
+                            } else {
+                                log::error!("Service {} not found", service_name);
+                                return Ok("not-installed".to_string());
+                            }
+                        }
+                        _ => {
+                            log::error!("Failed to check if service exists");
+                            return Ok("error".to_string());
+                        }
+                    }
+                }
+                _ => {
+                    log::warn!("Unknown service status: {}", status);
+                    return Ok("error".to_string());
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to check systemd service status: {}", e);
+            return Ok("error".to_string());
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
 async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
     use users::get_effective_uid;
 
@@ -480,7 +643,7 @@ async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::
 #[cfg(target_os = "linux")]
 async fn check_openrc_service_status(
     service_name: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
+) -> Result<String, Box<dyn std::error::Error>> {
     log::info!("Checking OpenRC service status for: {}", service_name);
 
     let status_output = StdCommand::new("rc-service")
@@ -496,21 +659,21 @@ async fn check_openrc_service_status(
 
             if status_str.contains("started") || status_str.contains("running") {
                 log::info!("Service is running");
-                return Ok(true);
+                return Ok("running".to_string());
             } else if status_str.contains("stopped") || status_str.contains("inactive") {
-                log::info!("Service is stopped, attempting to start");
-                return start_openrc_service(service_name).await;
+                log::info!("Service is stopped");
+                return Ok("stopped".to_string());
             } else if stderr_str.contains("does not exist") {
                 log::error!("Service {} does not exist", service_name);
-                return Ok(false);
+                return Ok("not-installed".to_string());
             } else {
                 log::warn!("Unknown service status, attempting to start");
-                return start_openrc_service(service_name).await;
+                return Ok("error".to_string());
             }
         }
         Err(e) => {
             log::error!("Failed to check OpenRC service status: {}", e);
-            return start_openrc_service(service_name).await;
+            return Ok("error".to_string());
         }
     }
 }
@@ -562,7 +725,7 @@ async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::e
 }
 
 #[cfg(target_os = "macos")]
-pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> {
+pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
     const SERVICE_IDENTIFIER: &str = "io.github.openlistteam.openlist.service";
 
     log::info!("Checking macOS service status for: {}", SERVICE_IDENTIFIER);
@@ -620,6 +783,64 @@ pub async fn check_service_status() -> Result<bool, Box<dyn std::error::Error>> 
         Err(e) => {
             log::error!("Failed to check macOS service status: {}", e);
             return start_macos_service(SERVICE_IDENTIFIER).await;
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>> {
+    const SERVICE_IDENTIFIER: &str = "io.github.openlistteam.openlist.service";
+
+    log::info!("Checking macOS service status for: {}", SERVICE_IDENTIFIER);
+
+    let status_output = StdCommand::new("launchctl")
+        .args(&["list", SERVICE_IDENTIFIER])
+        .output();
+
+    match status_output {
+        Ok(output) => {
+            if output.status.success() {
+                let output_str = String::from_utf8_lossy(&output.stdout);
+                log::info!("launchctl list output: {}", output_str);
+
+                if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
+                    log::info!("Extracted PID value: {}", pid_value);
+                    if let Ok(pid) = pid_value.parse::<i32>() {
+                        if pid > 0 {
+                            log::info!("Service is running with PID: {}", pid);
+                            return Ok("running".to_string());
+                        }
+                    }
+                }
+
+                if let Some(exit_status) = extract_plist_value(&output_str, "LastExitStatus") {
+                    if let Ok(status) = exit_status.parse::<i32>() {
+                        if status == 0 {
+                            log::info!("Service is loaded but not running (clean exit)");
+                            return Ok("stopped".to_string());
+                        } else {
+                            log::warn!("Service has non-zero exit status: {}", status);
+                            return Ok("stopped".to_string());
+                        }
+                    }
+                }
+
+                log::info!("Service appears to be loaded but status unclear");
+                return Ok("error".to_string());
+            } else {
+                let stderr_str = String::from_utf8_lossy(&output.stderr);
+                if stderr_str.contains("Could not find service") {
+                    log::error!("Service {} is not loaded", SERVICE_IDENTIFIER);
+                    return Ok("not-installed".to_string());
+                } else {
+                    log::warn!("launchctl list failed");
+                    return Ok("error".to_string());
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to check macOS service status: {}", e);
+            return Ok("error".to_string());
         }
     }
 }
@@ -693,413 +914,4 @@ fn extract_plist_value(plist_output: &str, key: &str) -> Option<String> {
     }
 
     None
-}
-
-#[cfg(target_os = "macos")]
-async fn restart_macos_service(
-    service_identifier: &str,
-) -> Result<bool, Box<dyn std::error::Error>> {
-    log::info!(
-        "Attempting to restart macOS service: {}",
-        service_identifier
-    );
-
-    let _ = StdCommand::new("launchctl")
-        .args(&["stop", service_identifier])
-        .status();
-
-    std::thread::sleep(std::time::Duration::from_millis(500));
-
-    start_macos_service(service_identifier).await
-}
-
-#[cfg(target_os = "windows")]
-pub async fn stop_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use deelevate::{PrivilegeLevel, Token};
-    use runas::Command as RunasCommand;
-    use std::os::windows::process::CommandExt;
-
-    let service_name = "openlist_desktop_service";
-    log::info!("Attempting to stop Windows service: {}", service_name);
-
-    let token = Token::with_current_process()?;
-    let level = token.privilege_level()?;
-
-    let powershell_cmd = format!("Stop-Service -Name '{}' -Force", service_name);
-
-    let status = match level {
-        PrivilegeLevel::NotPrivileged => {
-            log::info!("Running without admin privileges, using runas for elevation");
-            RunasCommand::new("powershell.exe")
-                .args(&["-Command", &powershell_cmd])
-                .show(false)
-                .status()?
-        }
-        _ => {
-            log::info!("Already have admin privileges, running directly");
-            StdCommand::new("powershell.exe")
-                .args(&["-Command", &powershell_cmd])
-                .creation_flags(0x08000000)
-                .status()?
-        }
-    };
-
-    if status.success() {
-        log::info!("Service stopped successfully");
-        std::thread::sleep(std::time::Duration::from_secs(1));
-        Ok(true)
-    } else {
-        log::error!("Failed to stop service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "linux")]
-pub async fn stop_service() -> Result<bool, Box<dyn std::error::Error>> {
-    const SERVICE_NAME: &str = "openlist-desktop-service";
-
-    log::info!("Attempting to stop Linux service: {}", SERVICE_NAME);
-
-    let init_system = detect_linux_init_system();
-
-    match init_system.as_str() {
-        "systemd" => stop_systemd_service(SERVICE_NAME).await,
-        "openrc" => stop_openrc_service(SERVICE_NAME).await,
-        _ => {
-            log::warn!("Unknown init system: {}, assuming systemd", init_system);
-            stop_systemd_service(SERVICE_NAME).await
-        }
-    }
-}
-
-#[cfg(target_os = "linux")]
-async fn stop_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
-
-    log::info!("Attempting to stop systemd service: {}", service_name);
-
-    let status = match get_effective_uid() {
-        0 => StdCommand::new("systemctl")
-            .args(&["stop", service_name])
-            .status()?,
-        _ => {
-            let elevator = linux_elevator();
-            log::info!("Using {} for elevation", elevator);
-
-            StdCommand::new(&elevator)
-                .args(&["systemctl", "stop", service_name])
-                .status()?
-        }
-    };
-
-    if status.success() {
-        log::info!("Service stop command completed");
-        std::thread::sleep(std::time::Duration::from_secs(1));
-
-        let verify_output = StdCommand::new("systemctl")
-            .args(&["is-active", service_name])
-            .output()?;
-
-        let verify_status_str = String::from_utf8_lossy(&verify_output.stdout);
-        let verify_status = verify_status_str.trim();
-        let is_stopped = verify_status == "inactive" || verify_status == "failed";
-
-        if is_stopped {
-            log::info!("Service verified as stopped");
-        } else {
-            log::warn!(
-                "Service stop command succeeded but service is still active: {}",
-                verify_status
-            );
-        }
-
-        Ok(is_stopped)
-    } else {
-        log::error!("Failed to stop systemd service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "linux")]
-async fn stop_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
-
-    log::info!("Attempting to stop OpenRC service: {}", service_name);
-    let status = match get_effective_uid() {
-        0 => StdCommand::new("rc-service")
-            .args(&[service_name, "stop"])
-            .status()?,
-        _ => {
-            let elevator = linux_elevator();
-            log::info!("Using {} for elevation", elevator);
-
-            StdCommand::new(&elevator)
-                .args(&["rc-service", service_name, "stop"])
-                .status()?
-        }
-    };
-
-    if status.success() {
-        log::info!("Service stop command completed");
-        std::thread::sleep(std::time::Duration::from_secs(1));
-
-        let verify_output = StdCommand::new("rc-service")
-            .args(&[service_name, "status"])
-            .output()?;
-
-        let verify_status = String::from_utf8_lossy(&verify_output.stdout).to_lowercase();
-        let is_stopped = verify_status.contains("stopped") || verify_status.contains("inactive");
-
-        if is_stopped {
-            log::info!("Service verified as stopped");
-        } else {
-            log::warn!(
-                "Service stop command succeeded but service is still running: {}",
-                verify_status
-            );
-        }
-
-        Ok(is_stopped)
-    } else {
-        log::error!("Failed to stop OpenRC service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "macos")]
-pub async fn stop_service() -> Result<bool, Box<dyn std::error::Error>> {
-    const SERVICE_IDENTIFIER: &str = "io.github.openlistteam.openlist.service";
-
-    log::info!("Attempting to stop macOS service: {}", SERVICE_IDENTIFIER);
-
-    let status = StdCommand::new("launchctl")
-        .args(&["stop", SERVICE_IDENTIFIER])
-        .status()?;
-
-    if status.success() {
-        log::info!("Service stop command completed");
-        std::thread::sleep(std::time::Duration::from_secs(1));
-
-        let verify_output = StdCommand::new("launchctl")
-            .args(&["list", SERVICE_IDENTIFIER])
-            .output()?;
-
-        if verify_output.status.success() {
-            let output_str = String::from_utf8_lossy(&verify_output.stdout);
-            log::info!("Verification output after stop: {}", output_str);
-
-            if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
-                if let Ok(pid) = pid_value.parse::<i32>() {
-                    let is_stopped = pid <= 0;
-
-                    if is_stopped {
-                        log::info!("Service verified as stopped");
-                    } else {
-                        log::warn!(
-                            "Service stop command succeeded but service is still running with PID: {}",
-                            pid
-                        );
-                    }
-
-                    return Ok(is_stopped);
-                }
-            }
-
-            log::info!("No PID found in output, service appears to be stopped");
-            return Ok(true);
-        }
-
-        log::info!("Could not verify service status after stop, assuming success");
-        Ok(true)
-    } else {
-        log::error!("Failed to stop macOS service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "windows")]
-pub async fn restart_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use deelevate::{PrivilegeLevel, Token};
-    use runas::Command as RunasCommand;
-    use std::os::windows::process::CommandExt;
-
-    let service_name = "openlist_desktop_service";
-    log::info!("Attempting to restart Windows service: {}", service_name);
-
-    let powershell_cmd = format!("Restart-Service -Name '{}' -Force", service_name);
-
-    let status = {
-        let token = Token::with_current_process()?;
-        let level = token.privilege_level()?;
-
-        match level {
-            PrivilegeLevel::NotPrivileged => {
-                log::info!("Running without admin privileges, using runas for elevation");
-                RunasCommand::new("powershell.exe")
-                    .args(&["-Command", &powershell_cmd])
-                    .show(false)
-                    .status()?
-            }
-            _ => {
-                log::info!("Already have admin privileges, running directly");
-                StdCommand::new("powershell.exe")
-                    .args(&["-Command", &powershell_cmd])
-                    .creation_flags(0x08000000)
-                    .status()?
-            }
-        }
-    };
-
-    if status.success() {
-        log::info!("Service restart command completed");
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        match check_service_status().await {
-            Ok(true) => {
-                log::info!("Service verified as running after restart");
-                Ok(true)
-            }
-            Ok(false) => {
-                log::warn!("Service restart command succeeded but service is not running");
-                Ok(false)
-            }
-            Err(e) => {
-                log::error!("Error verifying service status after restart: {}", e);
-                Ok(false)
-            }
-        }
-    } else {
-        log::error!("Failed to restart service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "linux")]
-pub async fn restart_service() -> Result<bool, Box<dyn std::error::Error>> {
-    const SERVICE_NAME: &str = "openlist-desktop-service";
-
-    log::info!("Attempting to restart Linux service: {}", SERVICE_NAME);
-
-    let init_system = detect_linux_init_system();
-
-    match init_system.as_str() {
-        "systemd" => restart_systemd_service(SERVICE_NAME).await,
-        "openrc" => restart_openrc_service(SERVICE_NAME).await,
-        _ => {
-            log::warn!("Unknown init system: {}, assuming systemd", init_system);
-            restart_systemd_service(SERVICE_NAME).await
-        }
-    }
-}
-
-#[cfg(target_os = "linux")]
-async fn restart_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
-
-    log::info!("Attempting to restart systemd service: {}", service_name);
-    let status = match get_effective_uid() {
-        0 => StdCommand::new("systemctl")
-            .args(&["restart", service_name])
-            .status()?,
-        _ => {
-            let elevator = linux_elevator();
-            log::info!("Using {} for elevation", elevator);
-
-            StdCommand::new(&elevator)
-                .args(&["systemctl", "restart", service_name])
-                .status()?
-        }
-    };
-
-    if status.success() {
-        log::info!("Service restart command completed");
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        let verify_output = StdCommand::new("systemctl")
-            .args(&["is-active", service_name])
-            .output()?;
-
-        let verify_status_str = String::from_utf8_lossy(&verify_output.stdout);
-        let verify_status = verify_status_str.trim();
-        let is_running = verify_status == "active" || verify_status == "activating";
-
-        if is_running {
-            log::info!("Service verified as running after restart");
-        } else {
-            log::warn!(
-                "Service restart command succeeded but service is not active: {}",
-                verify_status
-            );
-        }
-
-        Ok(is_running)
-    } else {
-        log::error!("Failed to restart systemd service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "linux")]
-async fn restart_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
-
-    log::info!("Attempting to restart OpenRC service: {}", service_name);
-    let status = match get_effective_uid() {
-        0 => StdCommand::new("rc-service")
-            .args(&[service_name, "restart"])
-            .status()?,
-        _ => {
-            let elevator = linux_elevator();
-            log::info!("Using {} for elevation", elevator);
-
-            StdCommand::new(&elevator)
-                .args(&["rc-service", service_name, "restart"])
-                .status()?
-        }
-    };
-
-    if status.success() {
-        log::info!("Service restart command completed");
-        std::thread::sleep(std::time::Duration::from_secs(2));
-
-        let verify_output = StdCommand::new("rc-service")
-            .args(&[service_name, "status"])
-            .output()?;
-
-        let verify_status = String::from_utf8_lossy(&verify_output.stdout).to_lowercase();
-        let is_running = verify_status.contains("started") || verify_status.contains("running");
-
-        if is_running {
-            log::info!("Service verified as running after restart");
-        } else {
-            log::warn!(
-                "Service restart command succeeded but service is not running: {}",
-                verify_status
-            );
-        }
-
-        Ok(is_running)
-    } else {
-        log::error!("Failed to restart OpenRC service, exit code: {}", status);
-        Ok(false)
-    }
-}
-
-#[cfg(target_os = "macos")]
-pub async fn restart_service() -> Result<bool, Box<dyn std::error::Error>> {
-    const SERVICE_IDENTIFIER: &str = "io.github.openlistteam.openlist.service";
-
-    log::info!(
-        "Attempting to restart macOS service: {}",
-        SERVICE_IDENTIFIER
-    );
-
-    let stop_result = stop_service().await?;
-    if !stop_result {
-        log::warn!("Failed to stop service, but continuing with restart attempt");
-    }
-
-    std::thread::sleep(std::time::Duration::from_millis(500));
-
-    start_macos_service(SERVICE_IDENTIFIER).await
 }

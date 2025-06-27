@@ -1,29 +1,29 @@
 import { useAppStore } from '../stores/app'
 
-export const useServiceActions = () => {
+export const useCoreActions = () => {
   const store = useAppStore()
 
-  const startService = async () => {
+  const startOpenListCore = async () => {
     try {
-      await store.startService()
+      await store.startOpenListCore()
     } catch (error) {
       console.error('Failed to start service:', error)
       throw error
     }
   }
 
-  const stopService = async () => {
+  const stopOpenListCore = async () => {
     try {
-      await store.stopService()
+      await store.startOpenListCore()
     } catch (error) {
       console.error('Failed to stop service:', error)
       throw error
     }
   }
 
-  const restartService = async () => {
+  const restartOpenListCore = async () => {
     try {
-      await store.restartService()
+      await store.restartOpenListCore()
     } catch (error) {
       console.error('Failed to restart service:', error)
       throw error
@@ -31,8 +31,8 @@ export const useServiceActions = () => {
   }
 
   return {
-    startService,
-    stopService,
-    restartService
+    startOpenListCore,
+    stopOpenListCore,
+    restartOpenListCore
   }
 }
