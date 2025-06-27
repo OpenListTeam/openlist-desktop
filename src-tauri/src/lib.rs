@@ -8,7 +8,7 @@ mod tray;
 mod utils;
 
 use cmd::binary::get_binary_version;
-use cmd::config::{load_settings, reset_settings, save_settings};
+use cmd::config::{load_settings, reset_settings, save_settings, save_settings_with_update_port};
 use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
     is_auto_check_enabled, restart_app, set_auto_check_enabled,
@@ -142,6 +142,7 @@ pub fn run() {
             open_folder,
             open_url,
             save_settings,
+            save_settings_with_update_port,
             load_settings,
             reset_settings,
             get_logs,

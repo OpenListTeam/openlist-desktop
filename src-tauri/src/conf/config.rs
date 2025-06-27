@@ -26,7 +26,7 @@ impl MergedSettings {
         }
     }
 
-    fn get_data_config_path() -> Result<PathBuf, String> {
+    pub fn get_data_config_path() -> Result<PathBuf, String> {
         let app_dir = std::env::current_exe()
             .map_err(|e| format!("Failed to get current exe path: {}", e))?
             .parent()
@@ -35,7 +35,7 @@ impl MergedSettings {
         Ok(app_dir.join("data").join("config.json"))
     }
 
-    fn read_data_config() -> Result<serde_json::Value, String> {
+    pub fn read_data_config() -> Result<serde_json::Value, String> {
         let path = Self::get_data_config_path()?;
         if !path.exists() {
             return Err("data/config.json does not exist".to_string());

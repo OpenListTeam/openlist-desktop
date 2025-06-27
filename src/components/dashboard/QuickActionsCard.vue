@@ -20,7 +20,12 @@
             <span>{{ t('dashboard.quickActions.restart') }}</span>
           </button>
 
-          <button @click="openWebUI" :disabled="!isCoreRunning" class="action-btn web-btn">
+          <button
+            @click="openWebUI"
+            :disabled="!isCoreRunning"
+            class="action-btn web-btn"
+            :title="store.openListCoreUrl"
+          >
             <ExternalLink :size="18" />
             <span>{{ t('dashboard.quickActions.openWeb') }}</span>
           </button>

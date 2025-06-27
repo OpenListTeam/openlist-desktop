@@ -148,6 +148,10 @@ export class TauriAPI {
     return await invoke('save_settings', { settings })
   }
 
+  static async saveSettingsWithUpdatePort(settings: MergedSettings): Promise<boolean> {
+    return await invoke('save_settings_with_update_port', { settings })
+  }
+
   static async resetSettings(): Promise<MergedSettings | null> {
     return await invoke('reset_settings')
   }

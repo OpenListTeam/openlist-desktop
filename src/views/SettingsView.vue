@@ -19,10 +19,7 @@ const autoStartApp = ref(false)
 const openlistCoreSettings = reactive({ ...store.settings.openlist })
 const rcloneSettings = reactive({ ...store.settings.rclone })
 const appSettings = reactive({ ...store.settings.app })
-
-const isOpenListPortChanged = computed(() => {
-  return openlistCoreSettings.port !== store.settings.openlist.port
-})
+let originalOpenlistPort = openlistCoreSettings.port || 5244
 
 watch(autoStartApp, async newValue => {
   if (newValue) {
@@ -72,6 +69,7 @@ onMounted(async () => {
 
   if (!appSettings.monitor_interval) appSettings.monitor_interval = 5
   if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
+  originalOpenlistPort = openlistCoreSettings.port || 5244
 })
 
 const hasUnsavedChanges = computed(() => {
@@ -108,8 +106,11 @@ const handleSave = async () => {
     store.settings.openlist = { ...openlistCoreSettings }
     store.settings.rclone = { ...rcloneSettings }
     store.settings.app = { ...appSettings }
-
-    await store.saveSettings()
+    if (originalOpenlistPort !== openlistCoreSettings.port) {
+      await store.saveSettingsWithUpdatePort()
+    } else {
+      await store.saveSettings()
+    }
     message.value = t('settings.saved')
     messageType.value = 'success'
   } catch (error) {
