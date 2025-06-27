@@ -48,7 +48,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Run ESLint
         run: yarn lint
@@ -101,7 +101,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install frontend dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Run prebuild script
         run: yarn prebuild:dev
@@ -136,7 +136,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Run npm audit
         run: yarn audit --audit-level moderate
@@ -184,7 +184,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install frontend dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Run prebuild script
         run: yarn prebuild:dev
