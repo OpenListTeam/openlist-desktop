@@ -11,14 +11,14 @@ fn normalize_path(path: &str) -> String {
     {
         let normalized = path.replace('/', "\\");
         if normalized.len() == 2 && normalized.chars().nth(1) == Some(':') {
-            format!("{}\\", normalized)
+            format!("{normalized}\\")
         } else if normalized.len() > 2
             && normalized.chars().nth(1) == Some(':')
             && normalized.chars().nth(2) != Some('\\')
         {
             let drive = &normalized[..2];
             let rest = &normalized[2..];
-            format!("{}\\{}", drive, rest)
+            format!("{drive}\\{rest}")
         } else {
             normalized
         }
@@ -246,14 +246,14 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
             "windows" => "win32",
             "macos" => "darwin",
             "linux" => "linux",
-            _ => return Err(format!("Unsupported platform: {}", platform)),
+            _ => return Err(format!("Unsupported platform: {platform}")),
         },
         match arch {
             "x86_64" => "x64",
             "x86" => "ia32",
             "aarch64" => "arm64",
             "arm" => "arm",
-            _ => return Err(format!("Unsupported architecture: {}", arch)),
+            _ => return Err(format!("Unsupported architecture: {arch}")),
         }
     );
 

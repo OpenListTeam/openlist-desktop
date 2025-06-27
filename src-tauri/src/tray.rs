@@ -227,7 +227,7 @@ fn handle_core_action(app_handle: &AppHandle, action: &str) {
         log::error!("Failed to emit tray core action event: {e}");
     }
 
-    log::debug!("Core action '{}' dispatched to frontend", action);
+    log::debug!("Core action '{action}' dispatched to frontend");
 }
 
 pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri::Result<()> {

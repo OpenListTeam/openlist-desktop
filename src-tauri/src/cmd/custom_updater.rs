@@ -350,7 +350,7 @@ pub async fn install_update_and_restart(
 
     if !path.exists() {
         let error_msg = "Installer file not found".to_string();
-        log::error!("{}", error_msg);
+        log::error!("{error_msg}");
         return Err(error_msg);
     }
 
@@ -381,7 +381,7 @@ pub async fn install_update_and_restart(
             std::process::exit(0);
         }
         Err(e) => {
-            log::error!("Update installation failed: {}", e);
+            log::error!("Update installation failed: {e}");
             if let Err(emit_err) = app.emit("update-install-error", &e) {
                 log::error!("Failed to emit install error event: {emit_err}");
             }

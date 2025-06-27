@@ -269,9 +269,9 @@ pub async fn create_rclone_mount_remote_process(
     _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
-        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {}", e))?;
+        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_file_path =
-        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {}", e))?;
+        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_rclone.log");
     let rclone_conf_path = binary_path
         .parent()
@@ -345,7 +345,7 @@ pub async fn check_mount_status(
     #[cfg(target_os = "windows")]
     {
         if mount_point.len() == 2 && mount_point.ends_with(':') {
-            let drive_path = format!("{}\\", mount_point);
+            let drive_path = format!("{mount_point}\\");
             match fs::read_dir(&drive_path) {
                 Ok(_) => return Ok(true),
                 Err(_) => return Ok(false),

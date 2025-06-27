@@ -308,7 +308,7 @@ async fn start_systemd_service_with_check(
                 "unknown" => {
                     log::warn!("Service status unknown, checking if service exists");
                     let exists_output = StdCommand::new("systemctl")
-                        .args(&["list-unit-files", &format!("{service_name}.service")])
+                        .args(["list-unit-files", &format!("{service_name}.service")])
                         .output();
 
                     match exists_output {
@@ -348,7 +348,7 @@ async fn start_openrc_service_with_check(
     log::info!("Checking OpenRC service status for: {service_name}");
 
     let status_output = StdCommand::new("rc-service")
-        .args(&[service_name, "status"])
+        .args([service_name, "status"])
         .output();
 
     match status_output {
@@ -360,7 +360,7 @@ async fn start_openrc_service_with_check(
 
             if status_str.contains("started") || status_str.contains("running") {
                 log::info!("Service is running");
-                return Ok(true);
+                Ok(true)
             } else if status_str.contains("stopped") || status_str.contains("inactive") {
                 log::info!("Service is stopped, attempting to start");
                 return start_openrc_service(service_name).await;
@@ -587,7 +587,7 @@ async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::
 
     let status = match get_effective_uid() {
         0 => StdCommand::new("systemctl")
-            .args(&["start", service_name])
+            .args(["start", service_name])
             .status()?,
         _ => {
             let elevator = linux_elevator();
@@ -604,7 +604,7 @@ async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
         let verify_output = StdCommand::new("systemctl")
-            .args(&["is-active", service_name])
+            .args(["is-active", service_name])
             .output()?;
 
         let verify_status_str = String::from_utf8_lossy(&verify_output.stdout);
@@ -621,7 +621,7 @@ async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::
 
         Ok(is_running)
     } else {
-        log::error!("Failed to start service, exit code: {}", status);
+        log::error!("Failed to start service, exit code: {status}");
         Ok(false)
     }
 }
@@ -633,7 +633,7 @@ async fn check_openrc_service_status(
     log::info!("Checking OpenRC service status for: {service_name}");
 
     let status_output = StdCommand::new("rc-service")
-        .args(&[service_name, "status"])
+        .args([service_name, "status"])
         .output();
 
     match status_output {
@@ -641,7 +641,7 @@ async fn check_openrc_service_status(
             let status_str = String::from_utf8_lossy(&output.stdout).to_lowercase();
             let stderr_str = String::from_utf8_lossy(&output.stderr).to_lowercase();
 
-            log::info!("OpenRC service status output: {}", status_str);
+            log::info!("OpenRC service status output: {status_str}");
 
             if status_str.contains("started") || status_str.contains("running") {
                 log::info!("Service is running");
@@ -671,14 +671,14 @@ async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::e
     log::info!("Attempting to start OpenRC service: {service_name}");
     let status = match get_effective_uid() {
         0 => StdCommand::new("rc-service")
-            .args(&[service_name, "start"])
+            .args([service_name, "start"])
             .status()?,
         _ => {
             let elevator = linux_elevator();
             log::info!("Using {elevator} for elevation");
 
             StdCommand::new(&elevator)
-                .args(&["rc-service", service_name, "start"])
+                .args(["rc-service", service_name, "start"])
                 .status()?
         }
     };
@@ -688,7 +688,7 @@ async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::e
         std::thread::sleep(std::time::Duration::from_millis(1000));
 
         let verify_output = StdCommand::new("rc-service")
-            .args(&[service_name, "status"])
+            .args([service_name, "status"])
             .output()?;
 
         let verify_status = String::from_utf8_lossy(&verify_output.stdout).to_lowercase();
@@ -698,8 +698,7 @@ async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::e
             log::info!("Service verified as running");
         } else {
             log::warn!(
-                "Service start command succeeded but service is not running: {}",
-                verify_status
+                "Service start command succeeded but service is not running: {verify_status}"
             );
         }
 
@@ -731,7 +730,7 @@ pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
                     if let Ok(pid) = pid_value.parse::<i32>() {
                         if pid > 0 {
                             log::info!("Service is running with PID: {pid}");
-                            Ok(true)
+                            return Ok(true);
                         }
                     }
                 }
@@ -793,7 +792,7 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
                     if let Ok(pid) = pid_value.parse::<i32>() {
                         if pid > 0 {
                             log::info!("Service is running with PID: {pid}");
-                            Ok("running".to_string())
+                            return Ok("running".to_string());
                         }
                     }
                 }
@@ -802,10 +801,10 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
                     if let Ok(status) = exit_status.parse::<i32>() {
                         if status == 0 {
                             log::info!("Service is loaded but not running (clean exit)");
-                            Ok("stopped".to_string())
+                            return Ok("stopped".to_string());
                         } else {
                             log::warn!("Service has non-zero exit status: {status}");
-                            Ok("stopped".to_string())
+                            return Ok("stopped".to_string());
                         }
                     }
                 }
@@ -854,17 +853,17 @@ async fn start_macos_service(service_identifier: &str) -> Result<bool, Box<dyn s
                 if let Ok(pid) = pid_value.parse::<i32>() {
                     if pid > 0 {
                         log::info!("Service verified as running with PID: {pid}");
-                        Ok(true)
+                        return Ok(true);
                     } else {
                         log::warn!("Service has invalid PID: {pid}");
-                        Ok(false)
+                        return Ok(false);
                     }
                 }
             }
 
             if output_str.contains("Label") && output_str.contains(service_identifier) {
                 log::warn!("Service is loaded but PID could not be determined");
-                Ok(false)
+                return Ok(false);
             }
         }
 
