@@ -13,17 +13,6 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/ci.yml'
-  push:
-    branches: [ main, dev ]
-    paths:
-      - 'src/**'
-      - 'src-tauri/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'yarn.lock'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - '.github/workflows/ci.yml'
 
 env:
   CARGO_TERM_COLOR: always

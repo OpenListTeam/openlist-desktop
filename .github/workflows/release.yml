@@ -352,6 +352,18 @@ jobs:
         run: |
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
+
+      - name: Update version for build
+        if: needs.auto-version.outputs.version
+        run: |
+          # Update package.json
+          yarn version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
           
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'
@@ -429,6 +441,18 @@ jobs:
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
 
+      - name: Update version for build
+        if: needs.auto-version.outputs.version
+        run: |
+          # Update package.json
+          yarn version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+
       - name: "Setup for linux"
         run: |-
           sudo ls -lR /etc/apt/
@@ -483,7 +507,7 @@ jobs:
             export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/:$PKG_CONFIG_PATH
             export PKG_CONFIG_SYSROOT_DIR=/usr/arm-linux-gnueabihf/
           fi
-          pnpm build --target ${{ matrix.target }}
+          yarn build --target ${{ matrix.target }}
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}

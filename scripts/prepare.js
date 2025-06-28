@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import fsp from 'node:fs/promises'
 import path from 'node:path'
 
 import AdmZip from 'adm-zip'
@@ -77,6 +78,31 @@ const getServiceInfo = exeName => {
   return {
     file: exeName + suffix + ext,
     downloadURL: `${serviceUrl}/${exeName}${ext}`
+  }
+}
+
+// SimpleSC.dll
+const resolvePlugin = async () => {
+  const url = 'https://nsis.sourceforge.io/mediawiki/images/e/ef/NSIS_Simple_Service_Plugin_Unicode_1.30.zip'
+  const TEMP_DIR = path.join(cwd, 'temp')
+  const tempDir = path.join(TEMP_DIR, 'SimpleSC')
+  const tempZip = path.join(tempDir, 'NSIS_Simple_Service_Plugin_Unicode_1.30.zip')
+  const tempDll = path.join(tempDir, 'SimpleSC.dll')
+  const pluginDir = path.join(process.env.APPDATA, 'Local/NSIS')
+  const pluginPath = path.join(pluginDir, 'SimpleSC.dll')
+  await fs.mkdir(pluginDir, { recursive: true })
+  await fs.mkdir(tempDir, { recursive: true })
+  if (fs.existsSync(pluginPath)) return
+  try {
+    if (!fs.existsSync(tempZip)) {
+      await downloadFile(url, tempZip)
+    }
+    const zip = new AdmZip(tempZip)
+
+    zip.extractAllTo(tempDir, true)
+    await fsp.cp(tempDll, pluginPath, { recursive: true, force: true })
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true })
   }
 }
 
@@ -172,7 +198,7 @@ async function main() {
       )
     )
   })
-
+  await resolvePlugin()
   await resolveService(getServiceInfo('install-openlist-service'))
   await resolveService(getServiceInfo('openlist-desktop-service'))
   await resolveService(getServiceInfo('uninstall-openlist-service'))
