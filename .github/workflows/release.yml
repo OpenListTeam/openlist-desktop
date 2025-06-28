@@ -356,10 +356,13 @@ jobs:
           yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
-          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+            sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+          else
+            sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+            sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+          fi
           
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'

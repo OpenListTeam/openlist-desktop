@@ -101,6 +101,7 @@ const resolvePlugin = async () => {
 
     zip.extractAllTo(tempDir, true)
     await fsp.cp(tempDll, pluginPath, { recursive: true, force: true })
+    console.log(`SimpleSC.dll copied to ${pluginPath}`)
   } finally {
     await fsp.rm(tempDir, { recursive: true, force: true })
   }
@@ -198,7 +199,9 @@ async function main() {
       )
     )
   })
-  await resolvePlugin()
+  if (isWin) {
+    await resolvePlugin()
+  }
   await resolveService(getServiceInfo('install-openlist-service'))
   await resolveService(getServiceInfo('openlist-desktop-service'))
   await resolveService(getServiceInfo('uninstall-openlist-service'))
