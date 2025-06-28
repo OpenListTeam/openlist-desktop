@@ -543,14 +543,11 @@ jobs:
           echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
           echo "BUILDTIME=$(TZ=Asia/Shanghai date)" >> $GITHUB_ENV
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload ARM artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ needs.changelog.outputs.tag }}
-          name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
-          body: ${{ needs.changelog.outputs.changelog }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
+          name: linux-${{ matrix.target }}-artifacts
+          path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
 
@@ -568,7 +565,14 @@ jobs:
         with:
           name: changelog
 
-      - name: Update release
+      - name: Download ARM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: linux-*-artifacts
+          merge-multiple: true
+          path: arm-artifacts
+
+      - name: Update release with ARM artifacts
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.changelog.outputs.tag }}
@@ -576,5 +580,8 @@ jobs:
           body_path: changelog.md
           draft: false
           prerelease: false
+          files: |
+            arm-artifacts/**/*.deb
+            arm-artifacts/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
