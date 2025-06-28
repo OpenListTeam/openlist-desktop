@@ -12,11 +12,7 @@ on:
         required: false
         type: boolean
         default: false
-  workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
+
 permissions: write-all
 env:
   CARGO_INCREMENTAL: 0
@@ -162,7 +158,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.version == ''
         run: |
           # Update package.json
-          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          yarn version --new-version ${{ steps.version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
           sed -i 's/^version = "[^"]*"/version = "${{ steps.version.outputs.version }}"/' src-tauri/Cargo.toml
@@ -357,7 +353,7 @@ jobs:
         if: needs.auto-version.outputs.version
         run: |
           # Update package.json
-          yarn version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
           sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
@@ -445,7 +441,7 @@ jobs:
         if: needs.auto-version.outputs.version
         run: |
           # Update package.json
-          yarn version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
           sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
