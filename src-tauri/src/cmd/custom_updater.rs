@@ -396,6 +396,12 @@ async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> 
     let mut cmd = Command::new(installer_path);
     cmd.arg("/SILENT");
 
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
     let _ = tokio::task::spawn_blocking(move || {
         cmd.spawn()
             .map_err(|e| format!("Failed to start Windows installer: {e}"))

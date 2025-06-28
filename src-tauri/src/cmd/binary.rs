@@ -12,10 +12,16 @@ pub async fn get_binary_version(binary_name: Option<String>) -> Result<String, S
     } else {
         app_dir.join(binary_name.unwrap_or("openlist".to_string()))
     };
-    let output = Command::new(binary_path)
-        .arg("version")
-        .output()
-        .map_err(|e| e.to_string())?;
+    let mut cmd = Command::new(binary_path);
+    cmd.arg("version");
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
+    let output = cmd.output().map_err(|e| e.to_string())?;
     if output.status.success() {
         let version_output = String::from_utf8_lossy(&output.stdout);
         let version_line = version_output
