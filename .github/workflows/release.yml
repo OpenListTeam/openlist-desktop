@@ -349,20 +349,44 @@ jobs:
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
 
-      - name: Update version for build
-        if: needs.auto-version.outputs.version
+      - name: Update version for build (Windows)
+        if: needs.auto-version.outputs.version && runner.os == 'Windows'
+        shell: pwsh
         run: |
           # Update package.json
           yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
-          if [[ "$RUNNER_OS" == "macOS" ]]; then
-            sed -i '' 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-            sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
-          else
-            sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-            sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
-          fi
+          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', 'version = "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', '"version": "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/tauri.conf.json
+
+      - name: Update version for build (macOS)
+        if: needs.auto-version.outputs.version && runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i '' 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+
+      - name: Update version for build (Linux)
+        if: needs.auto-version.outputs.version && runner.os == 'Linux'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
           
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'
