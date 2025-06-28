@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "io.github.openlistteam.openlist.desktop",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "yarn run dev",
     "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "yarn run web:build",
     "frontendDist": "../dist"
   },
   "app": {
