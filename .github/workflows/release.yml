@@ -341,7 +341,7 @@ jobs:
           node-version: "22"
       
       - name: Run install
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: install
       - name:  install and check
@@ -455,7 +455,7 @@ jobs:
           node-version: "22"
 
       - name: Run install
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: install
 
