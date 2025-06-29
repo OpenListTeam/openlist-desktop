@@ -188,8 +188,19 @@ const scrollToTop = () => {
 
 const clearLogs = async () => {
   if (confirm(t('logs.messages.confirmClear'))) {
-    await store.clearLogs()
-    selectedEntries.value.clear()
+    try {
+      await store.clearLogs(
+        (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
+          | 'openlist'
+          | 'rclone'
+          | 'app'
+      )
+      selectedEntries.value.clear()
+      showNotificationMessage(t('logs.notifications.clearSuccess'), 'success')
+    } catch (error) {
+      console.error('Failed to clear logs:', error)
+      showNotificationMessage(t('logs.notifications.clearFailed'), 'error')
+    }
   }
 }
 

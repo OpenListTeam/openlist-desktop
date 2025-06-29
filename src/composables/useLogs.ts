@@ -61,8 +61,13 @@ export function useLogs() {
     }
   }
 
-  const clearLogs = async () => {
-    await store.clearLogs()
+  const clearLogs = async (source?: 'openlist' | 'rclone' | 'app') => {
+    try {
+      await store.clearLogs(source)
+    } catch (error) {
+      console.error('Failed to clear logs:', error)
+      throw error
+    }
   }
 
   const copyLogsToClipboard = async () => {

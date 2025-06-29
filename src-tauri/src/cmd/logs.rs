@@ -72,6 +72,50 @@ pub async fn get_logs(source: Option<String>) -> Result<Vec<String>, String> {
 }
 
 #[tauri::command]
-pub async fn clear_logs() -> Result<bool, String> {
+pub async fn clear_logs(source: Option<String>) -> Result<bool, String> {
+    let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
+
+    let log_files = match source.as_deref() {
+        Some("openlist") => vec![app_dir.join("data/log/log.log")],
+        Some("app") => vec![app_dir.join("logs/app.log")],
+        Some("rclone") => vec![app_dir.join("logs/process_rclone.log")],
+        Some("openlist_core") => vec![app_dir.join("logs/process_openlist_core.log")],
+        None => vec![
+            app_dir.join("data/log/log.log"),
+            app_dir.join("logs/app.log"),
+            app_dir.join("logs/process_rclone.log"),
+            app_dir.join("logs/process_openlist_core.log"),
+        ],
+        _ => return Err("Invalid log source".to_string()),
+    };
+
+    let mut cleared_count = 0;
+    let mut errors = Vec::new();
+
+    for log_file in log_files {
+        if log_file.exists() {
+            match std::fs::write(&log_file, "") {
+                Ok(_) => {
+                    cleared_count += 1;
+                }
+                Err(e) => {
+                    let error_msg = format!("Failed to clear {log_file:?}: {e}");
+                    errors.push(error_msg);
+                }
+            }
+        }
+    }
+
+    if !errors.is_empty() {
+        return Err(format!(
+            "Some log files could not be cleared: {}",
+            errors.join(", ")
+        ));
+    }
+
+    if cleared_count == 0 {
+        return Err("No log files found to clear".to_string());
+    }
+
     Ok(true)
 }

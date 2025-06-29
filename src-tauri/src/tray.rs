@@ -210,7 +210,6 @@ pub fn update_tray_menu_delayed(
     service_running: bool,
 ) -> tauri::Result<()> {
     let app_handle_clone = app_handle.clone();
-    println!("Scheduling delayed tray menu update...");
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(3000));
         if let Err(e) = update_tray_menu(&app_handle_clone, service_running) {

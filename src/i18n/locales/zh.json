@@ -304,7 +304,9 @@
     "notifications": {
       "copySuccess": "成功复制 {count} 条日志到剪贴板",
       "copyFailed": "复制日志到剪贴板失败",
-      "exportSuccess": "成功导出 {count} 条日志到文件"
+      "exportSuccess": "成功导出 {count} 条日志到文件",
+      "clearSuccess": "日志清理成功",
+      "clearFailed": "清理日志失败"
     },
     "toolbar": {
       "pause": "暂停 (Space)",
