@@ -10,8 +10,6 @@ use tauri::State;
 pub async fn get_process_list(_state: State<'_, AppState>) -> Result<Vec<ProcessStatus>, String> {
     let api_key = get_api_key();
     let port = get_server_port();
-    println!("API Key: {api_key}");
-    println!("Server Port: {port}");
     let client = reqwest::Client::new();
     let response = client
         .get(format!("http://127.0.0.1:{port}/api/v1/processes"))
