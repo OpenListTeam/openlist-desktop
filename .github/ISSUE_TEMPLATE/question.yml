@@ -1,109 +1,109 @@
-name: Question or General Issue
-description: Ask a question or report an issue that doesn't fit other categories
-title: '[QUESTION] '
+name: 问题或一般事项
+description: 提问或报告不适合其他类别的问题
+title: '[问题] '
 labels: ['question', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Have a question or issue that doesn't fit the other categories? Please provide details below.
+        有不适合其他类别的问题或事项吗？请在下面提供详细信息。
 
   - type: dropdown
     id: question-type
     attributes:
-      label: Question Type
-      description: What type of question or issue is this?
+      label: 问题类型
+      description: 这是什么类型的问题或事项？
       options:
-        - General usage question
-        - Configuration question
-        - Compatibility question
-        - Best practices question
-        - Troubleshooting help
-        - Unclear behavior
-        - Integration question
-        - Development question
-        - Other
+        - 一般使用问题
+        - 配置问题
+        - 兼容性问题
+        - 最佳实践问题
+        - 故障排除帮助
+        - 行为不清楚
+        - 集成问题
+        - 开发问题
+        - 其他
     validations:
       required: true
 
   - type: textarea
     id: question-description
     attributes:
-      label: Question or Issue Description
-      description: Describe your question or issue in detail.
+      label: 问题或事项描述
+      description: 详细描述您的问题或事项。
     validations:
       required: true
 
   - type: textarea
     id: context
     attributes:
-      label: Context
-      description: Provide any relevant context that might help us understand your question.
+      label: 背景信息
+      description: 提供任何可能帮助我们理解您问题的相关背景。
       placeholder: |
-        - What are you trying to accomplish?
-        - What have you already tried?
-        - What resources have you consulted?
+        - 您想要完成什么？
+        - 您已经尝试了什么？
+        - 您查阅了哪些资源？
 
   - type: dropdown
     id: operating-system
     attributes:
-      label: Operating System
-      description: What operating system are you using?
+      label: 操作系统
+      description: 您使用的是什么操作系统？
       options:
         - Windows 11
         - Windows 10
         - macOS (Intel)
         - macOS (Apple Silicon)
         - Ubuntu
-        - Other Linux Distribution
-        - Other
-        - Not applicable
+        - 其他 Linux 发行版
+        - 其他
+        - 不适用
 
   - type: input
     id: app-version
     attributes:
-      label: OpenList Desktop Version
-      description: What version of OpenList Desktop are you using? (if applicable)
-      placeholder: e.g. v0.1.0
+      label: OpenList Desktop 版本
+      description: 您使用的是哪个版本的 OpenList Desktop？（如果适用）
+      placeholder: 例如 v0.1.0
 
   - type: textarea
     id: configuration-details
     attributes:
-      label: Configuration Details
-      description: If relevant, describe your current configuration.
+      label: 配置详情
+      description: 如果相关，请描述您当前的配置。
       placeholder: |
-        - Service settings
-        - Mount configurations
-        - Custom binary paths
-        - Special flags or options
+        - 服务设置
+        - 挂载配置
+        - 自定义二进制文件路径
+        - 特殊标志或选项
 
   - type: textarea
     id: expected-behavior
     attributes:
-      label: Expected Behavior
-      description: What did you expect to happen? (if applicable)
+      label: 预期行为
+      description: 您期望发生什么？（如果适用）
 
   - type: textarea
     id: actual-behavior
     attributes:
-      label: Actual Behavior
-      description: What actually happened? (if applicable)
+      label: 实际行为
+      description: 实际发生了什么？（如果适用）
 
   - type: textarea
     id: additional-info
     attributes:
-      label: Additional Information
-      description: Any other information that might be helpful.
+      label: 其他信息
+      description: 任何其他可能有帮助的信息。
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Checklist
-      description: Please confirm the following
+      label: 检查清单
+      description: 请确认以下内容
       options:
-        - label: I have searched existing issues and discussions for similar questions
+        - label: 我已搜索现有问题和讨论以查找类似问题
           required: true
-        - label: I have checked the documentation and README
+        - label: 我已查看文档和 README
           required: true
-        - label: This question is specifically about OpenList Desktop (not general OpenList or Rclone questions)
+        - label: 此问题专门关于 OpenList Desktop（不是一般的 OpenList 或 Rclone 问题）
           required: true

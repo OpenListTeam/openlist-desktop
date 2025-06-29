@@ -1,14 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Discussions
-    url: https://github.com/OpenListTeam/openlist-desktop/discussions
-    about: Ask questions, share ideas, and discuss with the community
-  - name: 📖 Documentation
-    url: https://github.com/OpenListTeam/openlist-desktop/blob/main/README.md
-    about: Read the project documentation and setup guides
-  - name: 🔧 OpenList Documentation
+  - name: 🔧 OpenList 文档
     url: https://docs.oplist.org/
-    about: Official OpenList documentation for the underlying service
-  - name: 🌐 Rclone Documentation
+    about: 底层服务的官方 OpenList 文档
+  - name: 🌐 Rclone 文档
     url: https://rclone.org/docs/
-    about: Official Rclone documentation for remote storage configuration
+    about: 远程存储配置的官方 Rclone 文档

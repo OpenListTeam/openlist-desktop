@@ -1,130 +1,130 @@
-name: Documentation Issue
-description: Report issues with documentation or suggest improvements
-title: '[DOCS] '
+name: 文档问题
+description: 报告文档问题或建议改进
+title: '[文档] '
 labels: ['documentation', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Help us improve the documentation! Please describe what's missing, unclear, or incorrect.
+        帮助我们改进文档！请描述缺失、不清楚或不正确的内容。
 
   - type: dropdown
     id: doc-type
     attributes:
-      label: Documentation Type
-      description: Which type of documentation needs attention?
+      label: 文档类型
+      description: 哪种类型的文档需要关注？
       options:
         - README.md
-        - Setup/Installation instructions
-        - Configuration guide
-        - API documentation
-        - Troubleshooting guide
-        - Code comments
-        - GitHub issue templates
-        - Contributing guidelines
-        - License/Legal documentation
-        - Other
+        - 设置/安装说明
+        - 配置指南
+        - API 文档
+        - 故障排除指南
+        - 代码注释
+        - GitHub 问题模板
+        - 贡献指南
+        - 许可证/法律文档
+        - 其他
     validations:
       required: true
 
   - type: dropdown
     id: issue-type
     attributes:
-      label: Issue Type
-      description: What type of documentation issue is this?
+      label: 问题类型
+      description: 这是什么类型的文档问题？
       options:
-        - Missing information
-        - Incorrect/outdated information
-        - Unclear instructions
-        - Typo/grammar error
-        - Missing examples
-        - Broken links
-        - Formatting issues
-        - Translation needed
-        - New documentation needed
-        - Other
+        - 缺少信息
+        - 错误/过时信息
+        - 说明不清楚
+        - 拼写/语法错误
+        - 缺少示例
+        - 链接失效
+        - 格式问题
+        - 需要翻译
+        - 需要新文档
+        - 其他
     validations:
       required: true
 
   - type: textarea
     id: issue-description
     attributes:
-      label: Issue Description
-      description: Describe the documentation issue in detail.
+      label: 问题描述
+      description: 详细描述文档问题。
     validations:
       required: true
 
   - type: textarea
     id: location
     attributes:
-      label: Location
-      description: Where is the documentation issue located?
+      label: 位置
+      description: 文档问题位于何处？
       placeholder: |
-        - File: e.g. README.md, docs/setup.md
-        - Section: e.g. "Installation", "Configuration"
-        - Line numbers: e.g. lines 25-30
-        - URL: if it's online documentation
+        - 文件：例如 README.md, docs/setup.md
+        - 章节：例如 "安装", "配置"
+        - 行号：例如 第25-30行
+        - URL：如果是在线文档
 
   - type: textarea
     id: current-content
     attributes:
-      label: Current Content
-      description: If applicable, paste the current content that needs to be changed.
+      label: 当前内容
+      description: 如果适用，请粘贴需要更改的当前内容。
 
   - type: textarea
     id: suggested-content
     attributes:
-      label: Suggested Improvement
-      description: What should the documentation say instead? Provide your suggested content.
+      label: 建议改进
+      description: 文档应该如何表述？请提供您建议的内容。
 
   - type: dropdown
     id: priority
     attributes:
-      label: Priority
-      description: How important is this documentation fix?
+      label: 优先级
+      description: 这个文档修复有多重要？
       options:
-        - Low - Minor improvement
-        - Medium - Notable issue
-        - High - Blocks users/contributors
-        - Critical - Prevents successful use
+        - 低 - 轻微改进
+        - 中 - 明显问题
+        - 高 - 阻止用户/贡献者
+        - 关键 - 阻止成功使用
     validations:
       required: true
 
   - type: checkboxes
     id: platforms
     attributes:
-      label: Platform Specific
-      description: Is this documentation issue specific to certain platforms?
+      label: 平台特定
+      description: 这个文档问题是否特定于某些平台？
       options:
-        - label: Windows-specific
-        - label: macOS-specific
-        - label: Linux-specific
-        - label: Cross-platform issue
+        - label: Windows 特定
+        - label: macOS 特定
+        - label: Linux 特定
+        - label: 跨平台问题
 
   - type: checkboxes
     id: contribution
     attributes:
-      label: Contribution
-      description: Are you willing to help improve the documentation?
+      label: 贡献
+      description: 您是否愿意帮助改进文档？
       options:
-        - label: I can help write/improve the content
-        - label: I can review proposed changes
-        - label: I can test the instructions
-        - label: I can provide examples or screenshots
+        - label: 我可以帮助编写/改进内容
+        - label: 我可以审查提议的更改
+        - label: 我可以测试说明
+        - label: 我可以提供示例或屏幕截图
 
   - type: textarea
     id: additional-context
     attributes:
-      label: Additional Context
-      description: Any other context about this documentation issue.
+      label: 其他信息
+      description: 关于此文档问题的任何其他信息。
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Checklist
-      description: Please confirm the following
+      label: 检查清单
+      description: 请确认以下内容
       options:
-        - label: I have searched existing issues for similar documentation problems
+        - label: 我已搜索现有问题以查找类似的文档问题
           required: true
-        - label: I have checked that this documentation issue still exists in the current version
+        - label: 我已确认此文档问题在当前版本中仍然存在
           required: true

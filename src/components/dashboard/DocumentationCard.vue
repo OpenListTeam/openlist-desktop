@@ -60,7 +60,7 @@
             <Terminal :size="16" />
             <span>{{ t('dashboard.documentation.commands') }}</span>
           </button>
-          <button @click="openLink('https://github.com/OpenListTeam/OpenList/issues')" class="link-btn">
+          <button @click="openLink('https://github.com/OpenListTeam/OpenList-desktop/issues')" class="link-btn">
             <HelpCircle :size="16" />
             <span>{{ t('dashboard.documentation.issues') }}</span>
           </button>

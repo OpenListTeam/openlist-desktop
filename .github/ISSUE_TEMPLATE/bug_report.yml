@@ -1,110 +1,110 @@
-name: Bug Report
-description: Create a report to help us improve OpenList Desktop
-title: '[BUG] '
+name: 错误报告
+description: 创建报告以帮助我们改进 OpenList Desktop
+title: '[错误] '
 labels: ['bug', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for taking the time to report a bug! Please fill out the form below to help us understand and fix the issue.
+        感谢您花时间报告Bug！请填写下面的表格，帮助我们理解和修复问题。
 
   - type: textarea
     id: bug-description
     attributes:
-      label: Bug Description
-      description: A clear and concise description of what the bug is.
+      label: 错误描述
+      description: 清楚简洁地描述错误是什么。
     validations:
       required: true
 
   - type: textarea
     id: steps-to-reproduce
     attributes:
-      label: Steps to Reproduce
-      description: Steps to reproduce the behavior
+      label: 重现步骤
+      description: 重现该行为的步骤
       placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
+        1. 前往 '...'
+        2. 点击 '....'
+        3. 向下滚动到 '....'
+        4. 看到错误
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: expected-behavior
     attributes:
-      label: Expected Behavior
-      description: A clear and concise description of what you expected to happen.
+      label: 预期行为
+      description: 清楚简洁地描述您期望发生的情况。
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: actual-behavior
     attributes:
-      label: Actual Behavior
-      description: A clear and concise description of what actually happened.
+      label: 实际行为
+      description: 清楚简洁地描述实际发生的情况。
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: operating-system
     attributes:
-      label: Operating System
-      description: What operating system are you using?
+      label: 操作系统
+      description: 您使用的是什么操作系统？
       options:
         - Windows 11
         - Windows 10
         - macOS (Intel)
         - macOS (Apple Silicon)
         - Ubuntu
-        - Other Linux Distribution
-        - Other
+        - 其他 Linux 发行版
+        - 其他
     validations:
       required: true
 
   - type: dropdown
     id: architecture
     attributes:
-      label: System Architecture
-      description: What system architecture are you using?
+      label: 系统架构
+      description: 您使用的是什么系统架构？
       options:
-        - x64 (64-bit)
+        - x64 (64位)
         - arm64
-        - x86 (32-bit)
-        - Other
+        - x86 (32位)
+        - 其他
     validations:
       required: true
 
   - type: input
     id: app-version
     attributes:
-      label: OpenList Desktop Version
-      description: What version of OpenList Desktop are you using?
-      placeholder: e.g. v0.1.0
+      label: OpenList Desktop 版本
+      description: 您使用的是哪个版本的 OpenList Desktop？
+      placeholder: 例如 v0.1.0
     validations:
       required: true
 
   - type: textarea
     id: logs
     attributes:
-      label: Application Logs
-      description: Please provide relevant logs from the Logs tab in the application
+      label: 应用程序日志
+      description: 请提供应用程序日志选项卡中的相关日志
       render: shell
 
   - type: textarea
     id: additional-context
     attributes:
-      label: Additional Context
-      description: Add any other context about the problem here, including screenshots if applicable.
+      label: 其他信息
+      description: 在此处添加有关问题的任何其他信息，包括屏幕截图（如适用）。
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Checklist
-      description: Please confirm the following
+      label: 检查清单
+      description: 请确认以下内容
       options:
-        - label: I have searched existing issues to ensure this is not a duplicate
+        - label: 我已搜索现有问题以确保这不是重复问题
           required: true
-        - label: I have provided all required environment information
+        - label: 我已提供所有必需的环境信息
           required: true
-        - label: I can reproduce this issue consistently
+        - label: 我可以稳定地重现此问题
           required: true

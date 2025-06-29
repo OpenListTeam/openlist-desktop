@@ -1,86 +1,74 @@
-name: Feature Request
-description: Suggest an idea for OpenList Desktop
-title: '[FEATURE] '
+name: 功能请求
+description: 为 OpenList Desktop 建议新功能
+title: '[功能] '
 labels: ['enhancement', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Thank you for suggesting a new feature! Please fill out the form below to help us understand your request.
+        感谢您建议新功能！请填写下面的表格，帮助我们理解您的请求。
 
   - type: textarea
     id: feature-description
     attributes:
-      label: Feature Description
-      description: A clear and concise description of the feature you'd like to see added.
+      label: 功能描述
+      description: 清楚简洁地描述您希望添加的功能。
     validations:
       required: true
 
   - type: textarea
     id: problem-statement
     attributes:
-      label: Problem Statement
-      description: Is your feature request related to a problem? Please describe what problem this feature would solve.
-      placeholder: I'm always frustrated when...
+      label: 问题陈述
+      description: 您的功能请求是否与某个问题相关？请描述此功能将解决什么问题。
+      placeholder: 我总是因为...而感到困扰
 
   - type: textarea
     id: proposed-solution
     attributes:
-      label: Proposed Solution
-      description: Describe the solution you'd like to see implemented.
+      label: 建议的解决方案
+      description: 描述您希望看到实现的解决方案。
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives Considered
-      description: Describe any alternative solutions or features you've considered.
+      label: 考虑的替代方案
+      description: 描述您考虑过的任何替代解决方案或功能。
 
   - type: dropdown
     id: feature-category
     attributes:
-      label: Feature Category
-      description: Which area of the application does this feature relate to?
+      label: 功能类别
+      description: 此功能与应用程序的哪个领域相关？
       options:
-        - User Interface / UX
-        - OpenList Service Management
-        - Rclone / Remote Storage
-        - Settings / Configuration
-        - Logging / Monitoring
-        - Performance / Optimization
-        - Security / Authentication
-        - Cross-platform Support
-        - Auto-updater
-        - Other
+        - 用户界面 / 用户体验
+        - OpenList 服务管理
+        - Rclone / 远程存储
+        - 设置 / 配置
+        - 日志 / 监控
+        - 性能 / 优化
+        - 安全 / 身份验证
+        - 跨平台支持
+        - 自动更新器
+        - 其他
     validations:
       required: true
-
-  - type: checkboxes
-    id: implementation
-    attributes:
-      label: Implementation
-      description: Check all that apply
-      options:
-        - label: I am willing to help implement this feature
-        - label: This feature requires changes to the frontend (Vue.js)
-        - label: This feature requires changes to the backend (Rust/Tauri)
-        - label: This feature requires changes to external binaries (OpenList/Rclone)
-        - label: This feature affects multiple platforms
 
   - type: textarea
     id: additional-context
     attributes:
-      label: Additional Context
-      description: Add any other context, mockups, or examples about the feature request here.
+      label: 其他信息
+      description: 在此处添加有关功能请求的任何其他信息、原型图或示例。
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Checklist
-      description: Please confirm the following
+      label: 检查清单
+      description: 请确认以下内容
       options:
-        - label: I have searched existing issues to ensure this feature hasn't been requested before
+        - label: 我已搜索现有问题以确保此功能之前没有被请求过
           required: true
-        - label: This feature request is specific to OpenList Desktop (not the underlying OpenList or Rclone projects)
+        - label: 此功能请求专门针对 OpenList Desktop（不是底层的 OpenList 或 Rclone 项目）
           required: true
