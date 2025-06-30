@@ -15,7 +15,10 @@ import {
   ArrowUp,
   ArrowDown,
   Maximize2,
-  Minimize2
+  Minimize2,
+  AlertCircle,
+  Info,
+  AlertTriangle
 } from 'lucide-vue-next'
 import * as chrono from 'chrono-node'
 
@@ -33,10 +36,12 @@ const showFilters = ref(false)
 const showSettings = ref(false)
 const fontSize = ref(13)
 const maxLines = ref(1000)
-const showLevel = ref(true)
 const isCompactMode = ref(false)
 const isFullscreen = ref(false)
 const stripAnsiColors = ref(true)
+const showNotification = ref(false)
+const notificationMessage = ref('')
+const notificationType = ref<'success' | 'info' | 'warning' | 'error'>('success')
 
 watch(
   filterSource,
@@ -47,6 +52,16 @@ watch(
 )
 
 let logRefreshInterval: NodeJS.Timeout | null = null
+
+const showNotificationMessage = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
+  notificationMessage.value = message
+  notificationType.value = type
+  showNotification.value = true
+
+  setTimeout(() => {
+    showNotification.value = false
+  }, 3000)
+}
 
 const stripAnsiCodes = (text: string): string => {
   return text.replace(/\u001b\[[0-9;]*[mGKHF]/g, '')
@@ -173,25 +188,51 @@ const scrollToTop = () => {
 
 const clearLogs = async () => {
   if (confirm(t('logs.messages.confirmClear'))) {
-    await store.clearLogs()
-    selectedEntries.value.clear()
+    try {
+      await store.clearLogs(
+        (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
+          | 'openlist'
+          | 'rclone'
+          | 'app'
+      )
+      selectedEntries.value.clear()
+      showNotificationMessage(t('logs.notifications.clearSuccess'), 'success')
+    } catch (error) {
+      console.error('Failed to clear logs:', error)
+      showNotificationMessage(t('logs.notifications.clearFailed'), 'error')
+    }
   }
 }
 
 const copyLogsToClipboard = async () => {
-  const logsText = filteredLogs.value
+  let logsToExport = filteredLogs.value
+
+  if (selectedEntries.value.size > 0) {
+    logsToExport = filteredLogs.value.filter((_, index) => selectedEntries.value.has(index))
+  }
+
+  const logsText = logsToExport
     .map((log: any) => `[${log.timestamp || 'N/A'}] [${log.level.toUpperCase()}] [${log.source}] ${log.message}`)
     .join('\n')
 
   try {
     await navigator.clipboard.writeText(logsText)
+    const count = selectedEntries.value.size > 0 ? selectedEntries.value.size : filteredLogs.value.length
+    showNotificationMessage(t('logs.notifications.copySuccess', { count }), 'success')
   } catch (error) {
     console.error('Failed to copy logs:', error)
+    showNotificationMessage(t('logs.notifications.copyFailed'), 'error')
   }
 }
 
 const exportLogs = () => {
-  const logsText = filteredLogs.value
+  let logsToExport = filteredLogs.value
+
+  if (selectedEntries.value.size > 0) {
+    logsToExport = filteredLogs.value.filter((_, index) => selectedEntries.value.has(index))
+  }
+
+  const logsText = logsToExport
     .map((log: any) => `[${log.timestamp || 'N/A'}] [${log.level.toUpperCase()}] [${log.source}] ${log.message}`)
     .join('\n')
 
@@ -204,6 +245,9 @@ const exportLogs = () => {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+
+  const count = selectedEntries.value.size > 0 ? selectedEntries.value.size : filteredLogs.value.length
+  showNotificationMessage(t('logs.notifications.exportSuccess', { count }), 'success')
 }
 
 const toggleSelectEntry = (index: number) => {
@@ -498,11 +542,6 @@ onUnmounted(() => {
       </div>
       <div class="setting-group">
         <label class="checkbox-label">
-          <input v-model="showLevel" type="checkbox" class="checkbox" />
-          {{ t('logs.settings.showLevel') }}
-        </label>
-
-        <label class="checkbox-label">
           <input v-model="isCompactMode" type="checkbox" class="checkbox" />
           {{ t('logs.settings.compactMode') }}
         </label>
@@ -516,7 +555,7 @@ onUnmounted(() => {
     <div class="log-container">
       <div class="log-header">
         <div class="log-col timestamp">{{ t('logs.headers.timestamp') }}</div>
-        <div v-if="showLevel" class="log-col level">{{ t('logs.headers.level') }}</div>
+        <div class="log-col level">{{ t('logs.headers.level') }}</div>
         <div class="log-col source">{{ t('logs.headers.source') }}</div>
         <div class="log-col message">{{ t('logs.headers.message') }}</div>
         <div class="log-col actions">
@@ -552,7 +591,7 @@ onUnmounted(() => {
           <div class="log-col timestamp">
             {{ log.timestamp || '--:--:--' }}
           </div>
-          <div v-if="showLevel" class="log-col level">
+          <div class="log-col level">
             <span class="level-badge" :class="log.level">
               {{ log.level.toUpperCase() }}
             </span>
@@ -583,6 +622,20 @@ onUnmounted(() => {
         </span>
       </div>
     </div>
+
+    <Transition name="notification">
+      <div v-if="showNotification" class="notification-toast" :class="[`notification-${notificationType}`]">
+        <div class="notification-content">
+          <div class="notification-icon">
+            <Copy v-if="notificationType === 'success'" :size="20" />
+            <AlertCircle v-else-if="notificationType === 'error'" :size="20" />
+            <Info v-else-if="notificationType === 'info'" :size="20" />
+            <AlertTriangle v-else-if="notificationType === 'warning'" :size="20" />
+          </div>
+          <span class="notification-message">{{ notificationMessage }}</span>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 

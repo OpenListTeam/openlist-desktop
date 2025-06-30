@@ -301,6 +301,13 @@
     "search": {
       "placeholder": "搜索日志... (Ctrl+F)"
     },
+    "notifications": {
+      "copySuccess": "成功复制 {count} 条日志到剪贴板",
+      "copyFailed": "复制日志到剪贴板失败",
+      "exportSuccess": "成功导出 {count} 条日志到文件",
+      "clearSuccess": "日志清理成功",
+      "clearFailed": "清理日志失败"
+    },
     "toolbar": {
       "pause": "暂停 (Space)",
       "resume": "恢复 (Space)",
@@ -368,7 +375,6 @@
       "fontSize": "字体大小：",
       "maxLines": "最大行数：",
       "showTimestamp": "显示时间戳",
-      "showLevel": "显示级别",
       "showSource": "显示来源",
       "compactMode": "紧凑模式",
       "stripAnsiColors": "去除 ANSI 颜色"

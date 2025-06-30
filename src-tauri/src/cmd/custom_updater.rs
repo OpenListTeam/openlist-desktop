@@ -1,12 +1,15 @@
-use crate::{cmd::config::save_settings, object::structs::AppState};
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
+
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, State};
 use tokio::io::AsyncWriteExt;
+
+use crate::cmd::config::save_settings;
+use crate::object::structs::AppState;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitHubRelease {

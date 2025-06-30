@@ -1,9 +1,11 @@
-use crate::conf::rclone::RcloneConfig;
-use crate::{conf::core::OpenListCoreConfig, utils::path::app_config_file_path};
 use std::path::PathBuf;
 
-use super::app::AppConfig;
 use serde::{Deserialize, Serialize};
+
+use super::app::AppConfig;
+use crate::conf::core::OpenListCoreConfig;
+use crate::conf::rclone::RcloneConfig;
+use crate::utils::path::app_config_file_path;
 
 #[allow(unused)]
 pub static OPENLIST_CORE_CONFIG: &str = "data/config.json";
@@ -78,11 +80,11 @@ impl MergedSettings {
             serde_json::from_str(&config).map_err(|e| e.to_string())?
         };
 
-        if let Ok(Some(port)) = Self::get_port_from_data_config() {
-            if merged_settings.openlist.port != port {
-                merged_settings.openlist.port = port;
-                merged_settings.save()?;
-            }
+        if let Ok(Some(port)) = Self::get_port_from_data_config()
+            && merged_settings.openlist.port != port
+        {
+            merged_settings.openlist.port = port;
+            merged_settings.save()?;
         }
 
         Ok(merged_settings)

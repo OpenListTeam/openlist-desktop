@@ -1,11 +1,9 @@
 use log::LevelFilter;
-use log4rs::{
-    append::rolling_file::policy::compound::{
-        CompoundPolicy, roll::fixed_window::FixedWindowRoller, trigger::size::SizeTrigger,
-    },
-    config::{Appender, Config, Root},
-    encode::pattern::PatternEncoder,
-};
+use log4rs::append::rolling_file::policy::compound::CompoundPolicy;
+use log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWindowRoller;
+use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
+use log4rs::config::{Appender, Config, Root};
+use log4rs::encode::pattern::PatternEncoder;
 
 pub fn init_log() -> Result<(), Box<dyn std::error::Error>> {
     let trigger = SizeTrigger::new(10 * 1024 * 1024); // 10 MB

@@ -1,5 +1,6 @@
-use parking_lot::RwLock;
 use std::sync::Arc;
+
+use parking_lot::RwLock;
 use tauri::AppHandle;
 
 use crate::conf::config::MergedSettings;

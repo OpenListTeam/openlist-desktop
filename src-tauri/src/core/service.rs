@@ -1,13 +1,14 @@
-use log::error;
-
 use std::env;
 use std::process::Command as StdCommand;
 
+use log::error;
+
 #[cfg(target_os = "windows")]
 pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
+    use std::os::windows::process::CommandExt;
+
     use deelevate::{PrivilegeLevel, Token};
     use runas::Command as RunasCommand;
-    use std::os::windows::process::CommandExt;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let install_path = app_dir.join("install-openlist-service.exe");
@@ -38,9 +39,10 @@ pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
 
 #[cfg(target_os = "windows")]
 pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
+    use std::os::windows::process::CommandExt;
+
     use deelevate::{PrivilegeLevel, Token};
     use runas::Command as RunasCommand;
-    use std::os::windows::process::CommandExt;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let uninstall_path = app_dir.join("uninstall-openlist-service.exe");
@@ -72,7 +74,7 @@ pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
 
 #[cfg(target_os = "linux")]
 pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let install_path = app_dir.join("install-openlist-service");
@@ -107,7 +109,7 @@ pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
 
 #[cfg(target_os = "linux")]
 pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let uninstall_path = app_dir.join("uninstall-openlist-service");
@@ -160,9 +162,10 @@ pub fn linux_elevator() -> String {
 
 #[cfg(target_os = "windows")]
 fn start_service_with_elevation(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    use std::os::windows::process::CommandExt;
+
     use deelevate::{PrivilegeLevel, Token};
     use runas::Command as RunasCommand;
-    use std::os::windows::process::CommandExt;
 
     let token = Token::with_current_process()?;
     let level = token.privilege_level()?;
@@ -366,7 +369,7 @@ async fn start_openrc_service_with_check(
                 return start_openrc_service(service_name).await;
             } else if stderr_str.contains("does not exist") {
                 log::error!("Service {service_name} does not exist");
-                return Ok(false);
+                Ok(false)
             } else {
                 log::warn!("Unknown service status, attempting to start");
                 return start_openrc_service(service_name).await;
@@ -502,16 +505,18 @@ fn detect_linux_init_system() -> String {
         return "openrc".to_string();
     }
 
-    if let Ok(output) = StdCommand::new("which").arg("systemctl").output() {
-        if output.status.success() && !output.stdout.is_empty() {
-            return "systemd".to_string();
-        }
+    if let Ok(output) = StdCommand::new("which").arg("systemctl").output()
+        && output.status.success()
+        && !output.stdout.is_empty()
+    {
+        return "systemd".to_string();
     }
 
-    if let Ok(output) = StdCommand::new("which").arg("rc-service").output() {
-        if output.status.success() && !output.stdout.is_empty() {
-            return "openrc".to_string();
-        }
+    if let Ok(output) = StdCommand::new("which").arg("rc-service").output()
+        && output.status.success()
+        && !output.stdout.is_empty()
+    {
+        return "openrc".to_string();
     }
 
     "systemd".to_string()
@@ -581,7 +586,7 @@ async fn check_systemd_service_status(
 
 #[cfg(target_os = "linux")]
 async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     log::info!("Attempting to start systemd service: {service_name}");
 
@@ -666,7 +671,7 @@ async fn check_openrc_service_status(
 
 #[cfg(target_os = "linux")]
 async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     log::info!("Attempting to start OpenRC service: {service_name}");
     let status = match get_effective_uid() {
@@ -739,7 +744,8 @@ pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
                     if let Ok(status) = exit_status.parse::<i32>() {
                         if status == 0 {
                             log::info!(
-                                "Service is loaded but not running (clean exit), attempting to start"
+                                "Service is loaded but not running (clean exit), attempting to \
+                                 start"
                             );
                             return start_macos_service(SERVICE_IDENTIFIER).await;
                         } else {

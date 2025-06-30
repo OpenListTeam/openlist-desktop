@@ -1,12 +1,12 @@
-use crate::core::service::check_service_status as check_service_status_impl;
-use crate::core::service::install_service as install_service_impl;
-use crate::core::service::start_service as start_service_impl;
-
-use crate::core::service::uninstall_service as uninstall_service_impl;
-use crate::object::structs::AppState;
-use crate::utils::api::{get_api_key, get_server_port};
 use reqwest;
 use tauri::State;
+
+use crate::core::service::{
+    check_service_status as check_service_status_impl, install_service as install_service_impl,
+    start_service as start_service_impl, uninstall_service as uninstall_service_impl,
+};
+use crate::object::structs::AppState;
+use crate::utils::api::{get_api_key, get_server_port};
 
 #[tauri::command]
 pub async fn check_service_status() -> Result<String, String> {

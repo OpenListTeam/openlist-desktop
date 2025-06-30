@@ -1,12 +1,12 @@
+use std::time::Duration;
+
+use reqwest::{self, Client};
+use tauri::State;
+
 use crate::cmd::http_api::{get_process_list, start_process};
 use crate::object::structs::AppState;
-use crate::utils::api::ProcessConfig;
+use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
-
-use crate::utils::api::{CreateProcessResponse, get_api_key, get_server_port};
-use reqwest::{self, Client};
-use std::time::Duration;
-use tauri::State;
 
 // use 45572 due to the reserved port on Windows
 pub const RCLONE_API_BASE: &str = "http://127.0.0.1:45572";

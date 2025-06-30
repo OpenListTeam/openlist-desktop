@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+
 use tauri::{AppHandle, State};
 
 use crate::cmd::http_api::{get_process_list, start_process, stop_process};
@@ -176,19 +177,17 @@ pub async fn update_tool_version(
     let was_running = running_process.map(|p| p.is_running).unwrap_or(false);
     let process_id = running_process.map(|p| p.config.id.clone());
 
-    if was_running {
-        if let Some(pid) = &process_id {
-            log::info!("Stopping {tool} process with ID: {pid}");
-            match tool.as_str() {
-                "openlist" | "rclone" => {
-                    stop_process(pid.clone(), state.clone())
-                        .await
-                        .map_err(|e| format!("Failed to stop process: {e}"))?;
-                }
-                _ => return Err("Unsupported tool".to_string()),
+    if was_running && let Some(pid) = &process_id {
+        log::info!("Stopping {tool} process with ID: {pid}");
+        match tool.as_str() {
+            "openlist" | "rclone" => {
+                stop_process(pid.clone(), state.clone())
+                    .await
+                    .map_err(|e| format!("Failed to stop process: {e}"))?;
             }
-            log::info!("Successfully stopped {tool} process");
+            _ => return Err("Unsupported tool".to_string()),
         }
+        log::info!("Successfully stopped {tool} process");
     }
 
     let result = download_and_replace_binary(&tool, &version).await;
@@ -197,19 +196,17 @@ pub async fn update_tool_version(
         Ok(_) => {
             log::info!("Successfully downloaded and replaced {tool} binary");
 
-            if was_running {
-                if let Some(pid) = &process_id {
-                    log::info!("Starting {tool} process with ID: {pid}");
-                    match tool.as_str() {
-                        "openlist" | "rclone" => {
-                            start_process(pid.clone(), state.clone())
-                                .await
-                                .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
-                        }
-                        _ => return Err("Unsupported tool".to_string()),
+            if was_running && let Some(pid) = &process_id {
+                log::info!("Starting {tool} process with ID: {pid}");
+                match tool.as_str() {
+                    "openlist" | "rclone" => {
+                        start_process(pid.clone(), state.clone())
+                            .await
+                            .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
                     }
-                    log::info!("Successfully restarted {tool} process");
+                    _ => return Err("Unsupported tool".to_string()),
                 }
+                log::info!("Successfully restarted {tool} process");
             }
 
             Ok(format!("Successfully updated {tool} to {version}"))
@@ -217,17 +214,15 @@ pub async fn update_tool_version(
         Err(e) => {
             log::error!("Failed to update {tool} binary: {e}");
 
-            if was_running {
-                if let Some(pid) = &process_id {
-                    log::info!(
-                        "Attempting to restart {tool} with previous binary after update failure"
-                    );
-                    match tool.as_str() {
-                        "openlist" | "rclone" => {
-                            let _ = start_process(pid.clone(), state.clone()).await;
-                        }
-                        _ => {}
+            if was_running && let Some(pid) = &process_id {
+                log::info!(
+                    "Attempting to restart {tool} with previous binary after update failure"
+                );
+                match tool.as_str() {
+                    "openlist" | "rclone" => {
+                        let _ = start_process(pid.clone(), state.clone()).await;
                     }
+                    _ => {}
                 }
             }
 
@@ -535,18 +530,18 @@ fn extract_tar_gz(
             .path()
             .map_err(|e| format!("Failed to get entry path: {e}"))?;
 
-        if let Some(file_name) = path.file_name() {
-            if file_name == executable_name {
-                let output_path = extract_dir.join(executable_name);
-                let mut output_file = fs::File::create(&output_path)
-                    .map_err(|e| format!("Failed to create output file: {e}"))?;
+        if let Some(file_name) = path.file_name()
+            && file_name == executable_name
+        {
+            let output_path = extract_dir.join(executable_name);
+            let mut output_file = fs::File::create(&output_path)
+                .map_err(|e| format!("Failed to create output file: {e}"))?;
 
-                std::io::copy(&mut entry, &mut output_file)
-                    .map_err(|e| format!("Failed to extract file: {e}"))?;
+            std::io::copy(&mut entry, &mut output_file)
+                .map_err(|e| format!("Failed to extract file: {e}"))?;
 
-                executable_path = Some(output_path);
-                break;
-            }
+            executable_path = Some(output_path);
+            break;
         }
     }
 

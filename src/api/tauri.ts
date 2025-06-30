@@ -160,8 +160,8 @@ export class TauriAPI {
     return await invoke('get_logs', { source })
   }
 
-  static async clearLogs(): Promise<boolean> {
-    return await invoke('clear_logs')
+  static async clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<boolean> {
+    return await invoke('clear_logs', { source })
   }
 
   static async getAdminPassword(): Promise<string> {

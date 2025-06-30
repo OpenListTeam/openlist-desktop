@@ -13,6 +13,9 @@ use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
     is_auto_check_enabled, restart_app, set_auto_check_enabled,
 };
+use cmd::http_api::{
+    get_process_list, restart_process, start_process, stop_process, update_process,
+};
 use cmd::logs::{clear_logs, get_admin_password, get_logs};
 use cmd::openlist_core::{create_openlist_core_process, get_openlist_core_status};
 use cmd::os_operate::{
@@ -22,21 +25,14 @@ use cmd::os_operate::{
 use cmd::rclone_core::{
     create_and_start_rclone_backend, create_rclone_backend_process, get_rclone_backend_status,
 };
-
 use cmd::rclone_mount::{
     check_mount_status, create_rclone_mount_remote_process, get_mount_info_list,
     rclone_create_remote, rclone_delete_remote, rclone_list_config, rclone_list_mounts,
     rclone_list_remotes, rclone_mount_remote, rclone_unmount_remote, rclone_update_remote,
 };
-
-use cmd::http_api::{
-    get_process_list, restart_process, start_process, stop_process, update_process,
-};
-
 use cmd::service::{
     check_service_status, install_service, start_service, stop_service, uninstall_service,
 };
-
 use object::structs::*;
 
 #[tauri::command]

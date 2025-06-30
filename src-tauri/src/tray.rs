@@ -1,10 +1,9 @@
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use tauri::{
-    AppHandle, Emitter, Manager,
-    menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-};
+
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{AppHandle, Emitter, Manager};
 
 static LAST_MENU_UPDATE: Mutex<Option<Instant>> = Mutex::new(None);
 const MIN_UPDATE_INTERVAL: Duration = Duration::from_millis(5000);
@@ -141,11 +140,11 @@ fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
 
 pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri::Result<()> {
     if let Ok(mut last_update) = LAST_MENU_UPDATE.lock() {
-        if let Some(last_time) = *last_update {
-            if last_time.elapsed() < MIN_UPDATE_INTERVAL {
-                log::debug!("Skipping tray menu update - too soon since last update");
-                return Ok(());
-            }
+        if let Some(last_time) = *last_update
+            && last_time.elapsed() < MIN_UPDATE_INTERVAL
+        {
+            log::debug!("Skipping tray menu update - too soon since last update");
+            return Ok(());
         }
         *last_update = Some(Instant::now());
     }
@@ -210,7 +209,6 @@ pub fn update_tray_menu_delayed(
     service_running: bool,
 ) -> tauri::Result<()> {
     let app_handle_clone = app_handle.clone();
-    println!("Scheduling delayed tray menu update...");
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(3000));
         if let Err(e) = update_tray_menu(&app_handle_clone, service_running) {

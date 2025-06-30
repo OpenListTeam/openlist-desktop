@@ -1,11 +1,10 @@
+use reqwest;
+use tauri::State;
+use url::Url;
+
 use crate::object::structs::{AppState, ServiceStatus};
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::path::{get_app_logs_dir, get_openlist_binary_path};
-use reqwest;
-
-use tauri::State;
-
-use url::Url;
 
 #[tauri::command]
 pub async fn create_openlist_core_process(

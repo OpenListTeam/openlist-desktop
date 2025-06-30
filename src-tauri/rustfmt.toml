@@ -1,13 +1,21 @@
-max_width = 100
-hard_tabs = false
-tab_spaces = 4
-newline_style = "Auto"
 edition = "2024"
-use_small_heuristics = "Default"
+tab_spaces = 4
+unstable_features = true
+
+# imports
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
 reorder_imports = true
-reorder_modules = true
-remove_nested_parens = true
-merge_derives = true
-use_try_shorthand = false
-use_field_init_shorthand = false
-force_explicit_abi = true
+
+# comments
+format_code_in_doc_comments = true
+normalize_comments = true
+wrap_comments = true
+
+# others
+condense_wildcard_suffixes = true
+format_strings = true
+format_macro_matchers = true
+merge_derives = false
+reorder_impl_items = true
+use_field_init_shorthand = true

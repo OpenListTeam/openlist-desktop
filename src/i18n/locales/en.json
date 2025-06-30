@@ -301,6 +301,13 @@
     "search": {
       "placeholder": "Search logs... (Ctrl+F)"
     },
+    "notifications": {
+      "copySuccess": "Successfully copied {count} logs entries to clipboard",
+      "copyFailed": "Failed to copy logs to clipboard",
+      "exportSuccess": "Successfully exported {count} logs entries to file",
+      "clearSuccess": "Logs cleared successfully",
+      "clearFailed": "Failed to clear logs"
+    },
     "toolbar": {
       "pause": "Pause (Space)",
       "resume": "Resume (Space)",
@@ -368,7 +375,6 @@
       "fontSize": "Font Size:",
       "maxLines": "Max Lines:",
       "showTimestamp": "Show Timestamp",
-      "showLevel": "Show Level",
       "showSource": "Show Source",
       "compactMode": "Compact Mode",
       "stripAnsiColors": "Strip ANSI Colors"

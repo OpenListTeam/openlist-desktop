@@ -1,3 +1,10 @@
+use std::fs;
+use std::path::Path;
+
+use reqwest::Client;
+use serde_json::json;
+use tauri::State;
+
 use super::http_api::get_process_list;
 use super::rclone_core::{RCLONE_API_BASE, RCLONE_AUTH};
 use crate::conf::rclone::{RcloneCreateRemoteRequest, RcloneMountRequest, RcloneWebdavConfig};
@@ -6,12 +13,6 @@ use crate::object::structs::{
 };
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
-use reqwest::Client;
-use serde_json::json;
-use std::fs;
-use std::path::Path;
-
-use tauri::State;
 
 #[tauri::command]
 pub async fn rclone_list_config(
@@ -37,14 +38,12 @@ pub async fn rclone_list_config(
         } else if let Some(obj) = json.as_object() {
             let mut filtered_map = serde_json::Map::new();
             for (remote_name, remote_config) in obj {
-                if let Some(config_obj) = remote_config.as_object() {
-                    if let Some(remote_type_value) = config_obj.get("type") {
-                        if let Some(type_str) = remote_type_value.as_str() {
-                            if type_str == remote_type {
-                                filtered_map.insert(remote_name.clone(), remote_config.clone());
-                            }
-                        }
-                    }
+                if let Some(config_obj) = remote_config.as_object()
+                    && let Some(remote_type_value) = config_obj.get("type")
+                    && let Some(type_str) = remote_type_value.as_str()
+                    && type_str == remote_type
+                {
+                    filtered_map.insert(remote_name.clone(), remote_config.clone());
                 }
             }
             serde_json::Value::Object(filtered_map)

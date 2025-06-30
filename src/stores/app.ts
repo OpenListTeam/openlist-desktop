@@ -543,12 +543,20 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function clearLogs() {
+  async function clearLogs(source?: 'openlist' | 'rclone' | 'app') {
     try {
-      await TauriAPI.clearLogs()
-      logs.value = []
+      loading.value = true
+      const result = await TauriAPI.clearLogs(source)
+      if (result) {
+        logs.value = []
+      } else {
+        throw new Error('Failed to clear logs - backend returned false')
+      }
     } catch (err) {
-      console.error('Failed to clear logs:', err)
+      error.value = 'Failed to clear logs'
+      throw err
+    } finally {
+      loading.value = false
     }
   }
 
