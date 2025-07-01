@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 
 use reqwest;
@@ -121,7 +120,7 @@ pub async fn restart_process(id: String, _state: State<'_, AppState>) -> Result<
 #[tauri::command]
 pub async fn update_process(
     id: String,
-    update_config: HashMap<String, String>,
+    update_config: serde_json::Value,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
     let api_key = get_api_key();
