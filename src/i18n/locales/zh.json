@@ -453,8 +453,8 @@
       "passwordPlaceholder": "密码",
       "mountPoint": "挂载点",
       "mountPointPlaceholder": "例如：T: (Windows) 或 /mnt/remote (Linux)",
-      "volumeName": "卷名",
-      "volumeNamePlaceholder": "例如：我的云存储",
+      "volumeName": "远程路径",
+      "volumeNamePlaceholder": "例如：/",
       "autoMount": "开机自动挂载",
       "advancedSettings": "高级设置",
       "extraFlags": "额外标志",
@@ -480,6 +480,7 @@
     "messages": {
       "fillRequiredFields": "请填写所有必填字段",
       "mountPointRequired": "挂载点为必填项",
+      "confirmDeleteTitle": "删除配置",
       "confirmDelete": "您确定要删除远程配置 \"{name}\" 吗？",
       "failedToSave": "保存配置失败",
       "failedToMount": "挂载远程失败",
@@ -488,6 +489,11 @@
       "failedToRefresh": "刷新挂载状态失败",
       "failedToStartService": "启动 rclone 服务失败",
       "failedToStopService": "停止 rclone 服务失败"
+    },
+    "tip": {
+      "webdavTitle": "需要启用 WebDAV 管理功能",
+      "webdavMessage": "在挂载远程存储之前，请确保在 OpenList 核心中为用户启用了 WebDAV 管理功能",
+      "dismissForever": "永久关闭"
     }
   },
   "app": {

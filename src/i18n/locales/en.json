@@ -451,10 +451,10 @@
       "usernamePlaceholder": "Username",
       "password": "Password",
       "passwordPlaceholder": "Password",
-      "mountPoint": "Mount Point",
+      "mountPoint": "Mount Path",
       "mountPointPlaceholder": "e.g., T: (Windows) or /mnt/remote (Linux)",
-      "volumeName": "Volume Name",
-      "volumeNamePlaceholder": "e.g., My Cloud Storage",
+      "volumeName": "Remote Path",
+      "volumeNamePlaceholder": "e.g., /",
       "autoMount": "Auto-mount on startup",
       "advancedSettings": "Advanced Settings",
       "extraFlags": "Extra Flags",
@@ -480,6 +480,7 @@
     "messages": {
       "fillRequiredFields": "Please fill in all required fields",
       "mountPointRequired": "Mount point is required",
+      "confirmDeleteTitle": "Delete Configuration",
       "confirmDelete": "Are you sure you want to delete the remote configuration \"{name}\"?",
       "failedToSave": "Failed to save configuration",
       "failedToMount": "Failed to mount remote",
@@ -488,6 +489,11 @@
       "failedToRefresh": "Failed to refresh mount status",
       "failedToStartService": "Failed to start rclone service",
       "failedToStopService": "Failed to stop rclone service"
+    },
+    "tip": {
+      "webdavTitle": "Enable WebDAV Management Required",
+      "webdavMessage": "Before mounting remotes, please ensure WebDAV management for specific user is enabled in OpenList Core.",
+      "dismissForever": "Dismiss forever"
     }
   },
   "app": {

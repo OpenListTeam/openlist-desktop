@@ -22,7 +22,7 @@ export const useAppStore = defineStore('app', () => {
       ssl_enabled: false
     },
     rclone: {
-      config: {} // Flexible JSON object for rclone configuration
+      config: {}
     },
     app: {
       theme: 'light',
@@ -88,8 +88,8 @@ export const useAppStore = defineStore('app', () => {
         throw new Error('Failed to create remote configuration')
       }
       settings.value.rclone.config[name] = fullConfig
-      await saveSettings()
       await loadRemoteConfigs()
+      await saveSettings()
       return true
     } catch (err: any) {
       error.value = 'Failed to create remote configuration'
@@ -104,7 +104,7 @@ export const useAppStore = defineStore('app', () => {
     try {
       loading.value = true
       const fullConfig = {
-        name,
+        name: config.name,
         type,
         url: config.url,
         vendor: config.vendor || undefined,
@@ -121,13 +121,56 @@ export const useAppStore = defineStore('app', () => {
         user: fullConfig.user,
         pass: fullConfig.pass
       }
-      const result = await TauriAPI.updateRemoteConfig(name, type, updatedConfig)
-      if (!result) {
-        throw new Error('Failed to update remote configuration')
+      if (name !== config.name) {
+        const result = createRemoteConfig(config.name, type, config)
+        if (!result) {
+          throw new Error('Failed to create remote configuration')
+        }
+        const deleteResult = await TauriAPI.deleteRemoteConfig(name)
+        if (!deleteResult) {
+          throw new Error('Failed to delete old remote configuration')
+        }
+      } else {
+        const result = await TauriAPI.updateRemoteConfig(name, type, updatedConfig)
+        if (!result) {
+          throw new Error('Failed to update remote configuration')
+        }
+        settings.value.rclone.config[config.name] = fullConfig
       }
-      settings.value.rclone.config[name] = fullConfig
-      await saveSettings()
       await loadRemoteConfigs()
+      if (name !== config.name && settings.value.rclone.config[name]) {
+        delete settings.value.rclone.config[name]
+      }
+      const oldProcessId = await getRcloneMountProcessId(name)
+      if (oldProcessId) {
+        try {
+          await TauriAPI.stopProcess(oldProcessId)
+          await TauriAPI.deleteProcess(oldProcessId)
+
+          const mountArgs = [
+            `${fullConfig.name}:${fullConfig.volumeName || ''}`,
+            fullConfig.mountPoint || '',
+            ...(fullConfig.extraFlags || [])
+          ]
+          const newProcessConfig: ProcessConfig = {
+            id: `rclone_mount_${fullConfig.name}_process`,
+            name: `rclone_mount_${fullConfig.name}_process`,
+            args: mountArgs,
+            auto_start: fullConfig.autoMount,
+            bin_path: 'rclone',
+            log_file: '',
+            auto_restart: true,
+            run_as_admin: false,
+            created_at: 0,
+            updated_at: 0
+          }
+          await TauriAPI.createRcloneMountRemoteProcess(newProcessConfig)
+        } catch (err) {
+          console.warn(`Failed to update mount process for renamed config ${name} -> ${config.name}:`, err)
+        }
+      }
+      await saveSettings()
+      await loadMountInfos()
       return true
     } catch (err: any) {
       error.value = 'Failed to update remote configuration'
@@ -141,8 +184,22 @@ export const useAppStore = defineStore('app', () => {
   async function deleteRemoteConfig(name: string) {
     try {
       loading.value = true
+      const processId = await getRcloneMountProcessId(name)
+      if (processId) {
+        try {
+          await TauriAPI.stopProcess(processId)
+          await TauriAPI.deleteProcess(processId)
+        } catch (err) {
+          console.warn(`Failed to stop/delete mount process for ${name}:`, err)
+        }
+      }
       await TauriAPI.deleteRemoteConfig(name)
       await loadRemoteConfigs()
+      if (settings.value.rclone.config[name]) {
+        delete settings.value.rclone.config[name]
+        await saveSettings()
+      }
+      await loadMountInfos()
       return true
     } catch (err: any) {
       error.value = 'Failed to delete remote configuration'
@@ -168,8 +225,9 @@ export const useAppStore = defineStore('app', () => {
   const fullRcloneConfigs = computed(() => {
     const result: RcloneFormConfig[] = []
     for (const [key, config] of Object.entries(remoteConfigs.value)) {
+      let newConfig
       if (settings.value.rclone.config[key]) {
-        result.push({
+        newConfig = {
           name: key,
           type: 'webdav',
           url: config.url,
@@ -182,9 +240,9 @@ export const useAppStore = defineStore('app', () => {
           extraOptions: settings.value.rclone.config[key].extraOptions || {},
           autoMount: settings.value.rclone.config[key].autoMount ?? false,
           metadata: settings.value.rclone.config[key].metadata || {}
-        } as RcloneFormConfig)
+        } as RcloneFormConfig
       } else {
-        const newConfig = {
+        newConfig = {
           ...defaultRcloneFormConfig,
           name: key,
           url: config.url,
@@ -192,10 +250,9 @@ export const useAppStore = defineStore('app', () => {
           user: config.user,
           pass: config.pass
         } as RcloneFormConfig
-        result.push(newConfig)
-        settings.value.rclone.config[key] = newConfig
-        saveSettings().catch(console.error)
       }
+      result.push(newConfig)
+      settings.value.rclone.config[key] = newConfig
     }
     return result
   })
@@ -211,7 +268,6 @@ export const useAppStore = defineStore('app', () => {
       if (!config) {
         throw new Error(`No configuration found for remote: ${name}`)
       }
-
       const processId = await getRcloneMountProcessId(name)
       console.log(`Mounting remote ${name} with process ID:`, processId)
       if (processId) {
@@ -230,33 +286,34 @@ export const useAppStore = defineStore('app', () => {
           console.log(`Remote ${name} is already mounted`)
           return
         }
+      } else {
+        const mountArgs = [
+          `${config.name}:${config.volumeName || ''}`,
+          config.mountPoint || '',
+          ...(config.extraFlags || [])
+        ]
+        const createRemoteConfig: ProcessConfig = {
+          id: `rclone_mount_${name}_process`,
+          name: `rclone_mount_${name}_process`,
+          args: mountArgs,
+          auto_start: config.autoMount,
+          bin_path: 'rclone',
+          log_file: '',
+          auto_restart: true,
+          run_as_admin: false,
+          created_at: 0,
+          updated_at: 0
+        }
+        const createResponse = await TauriAPI.createRcloneMountRemoteProcess(createRemoteConfig)
+        if (!createResponse || !createResponse.id) {
+          throw new Error('Failed to create mount process')
+        }
+        const startResponse = await TauriAPI.startProcess(createResponse.id)
+        if (!startResponse) {
+          throw new Error('Failed to start mount process')
+        }
+        await loadMountInfos()
       }
-      const mountArgs = [
-        `${config.name}:${config.volumeName || ''}`,
-        config.mountPoint || '',
-        ...(config.extraFlags || [])
-      ]
-      const createRemoteConfig: ProcessConfig = {
-        id: `rclone_mount_${name}_process`,
-        name: `rclone_mount_${name}_process`,
-        args: mountArgs,
-        auto_start: config.autoMount,
-        bin_path: 'rclone',
-        log_file: '',
-        auto_restart: true,
-        run_as_admin: false,
-        created_at: 0,
-        updated_at: 0
-      }
-      const createResponse = await TauriAPI.createRcloneMountRemoteProcess(createRemoteConfig)
-      if (!createResponse || !createResponse.id) {
-        throw new Error('Failed to create mount process')
-      }
-      const startResponse = await TauriAPI.startProcess(createResponse.id)
-      if (!startResponse) {
-        throw new Error('Failed to start mount process')
-      }
-      await loadMountInfos()
     } catch (err: any) {
       error.value = `Failed to mount remote ${name}: ${formatError(err)}`
       console.error('Failed to mount remote:', err)
@@ -325,6 +382,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function saveSettings() {
     try {
+      console.log('value:', JSON.stringify(settings.value))
       await TauriAPI.saveSettings(settings.value)
     } catch (err) {
       error.value = 'Failed to save settings'

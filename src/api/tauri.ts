@@ -58,6 +58,10 @@ export class TauriAPI {
     return await invoke('update_process', { id, updateConfig: config })
   }
 
+  static async deleteProcess(id: string): Promise<boolean> {
+    return await invoke('delete_process', { id })
+  }
+
   // OpenList Core management
 
   static async createOpenListCore(autoStart: boolean): Promise<ProcessConfig> {

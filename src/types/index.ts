@@ -66,7 +66,6 @@ export interface AppConfig {
   auto_update_enabled?: boolean
 }
 
-// Backend structure - this matches MergedSettings in Rust
 export interface MergedSettings {
   openlist: OpenListCoreConfig
   rclone: RcloneConfig

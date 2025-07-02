@@ -139,3 +139,21 @@ pub async fn update_process(
         Err(format!("Failed to update process: {}", response.status()))
     }
 }
+
+#[tauri::command]
+pub async fn delete_process(id: String, _state: State<'_, AppState>) -> Result<bool, String> {
+    let api_key = get_api_key();
+    let port = get_server_port();
+    let client = reqwest::Client::new();
+    let response = client
+        .delete(format!("http://127.0.0.1:{port}/api/v1/processes/{id}"))
+        .header("Authorization", format!("Bearer {api_key}"))
+        .send()
+        .await
+        .map_err(|e| format!("Failed to send request: {e}"))?;
+    if response.status().is_success() {
+        Ok(true)
+    } else {
+        Err(format!("Failed to delete process: {}", response.status()))
+    }
+}

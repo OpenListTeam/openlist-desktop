@@ -22,6 +22,7 @@ import {
 } from 'lucide-vue-next'
 import type { RcloneFormConfig } from '../types'
 import { useAppStore } from '@/stores/app'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
@@ -31,6 +32,13 @@ const showAddForm = ref(false)
 const editingConfig = ref<RcloneFormConfig | null>(null)
 const searchQuery = ref('')
 const statusFilter = ref<'all' | 'mounted' | 'unmounted' | 'error'>('all')
+
+const showConfirmDialog = ref(false)
+const confirmDialogConfig = ref({
+  title: '',
+  message: '',
+  configToDelete: null as RcloneFormConfig | null
+})
 
 let mountRefreshInterval: NodeJS.Timeout | null = null
 let backendStatusCheckInterval: NodeJS.Timeout | null = null
@@ -188,13 +196,32 @@ const unmountConfig = async (config: RcloneFormConfig) => {
 
 const deleteConfig = async (config: RcloneFormConfig) => {
   if (!config.name) return
-  if (confirm(t('mount.messages.confirmDelete', { name: config.name }))) {
-    try {
-      await store.deleteRemoteConfig(config.name)
-    } catch (error: any) {
-      console.error(error.message || t('mount.messages.failedToDelete'))
-    }
+
+  confirmDialogConfig.value = {
+    title: t('mount.messages.confirmDeleteTitle'),
+    message: t('mount.messages.confirmDelete', { name: config.name }),
+    configToDelete: config
   }
+  showConfirmDialog.value = true
+}
+
+const confirmDelete = async () => {
+  const config = confirmDialogConfig.value.configToDelete
+  if (!config || !config.name) return
+
+  try {
+    await store.deleteRemoteConfig(config.name)
+  } catch (error: any) {
+    console.error(error.message || t('mount.messages.failedToDelete'))
+  } finally {
+    showConfirmDialog.value = false
+    confirmDialogConfig.value.configToDelete = null
+  }
+}
+
+const cancelDelete = () => {
+  showConfirmDialog.value = false
+  confirmDialogConfig.value.configToDelete = null
 }
 
 const startBackend = async () => {
@@ -297,6 +324,13 @@ const openInFileExplorer = async (path?: string) => {
   }
 }
 
+const showWebdavTip = ref(!localStorage.getItem('webdav_tip_dismissed'))
+
+const dismissWebdavTip = () => {
+  showWebdavTip.value = false
+  localStorage.setItem('webdav_tip_dismissed', 'true')
+}
+
 onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
   await rcloneStore.checkRcloneBackendStatus()
@@ -372,6 +406,21 @@ onUnmounted(() => {
             <span>{{ t('mount.actions.addRemote') }}</span>
           </button>
         </div>
+      </div>
+    </div>
+
+    <div v-if="showWebdavTip" class="webdav-tip">
+      <div class="tip-content">
+        <div class="tip-icon">
+          <Settings class="icon" />
+        </div>
+        <div class="tip-message">
+          <h4 class="tip-title">{{ t('mount.tip.webdavTitle') }}</h4>
+          <p class="tip-description">{{ t('mount.tip.webdavMessage') }}</p>
+        </div>
+        <button @click="dismissWebdavTip" class="tip-close" :title="t('mount.tip.dismissForever')">
+          <X class="close-icon" />
+        </button>
       </div>
     </div>
 
@@ -680,6 +729,16 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      :is-open="showConfirmDialog"
+      :title="confirmDialogConfig.title"
+      :message="confirmDialogConfig.message"
+      :confirm-text="t('mount.actions.delete')"
+      :cancel-text="t('common.cancel')"
+      variant="danger"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
 
