@@ -99,8 +99,8 @@ const refreshing = ref(false)
 const getCurrentVersions = async () => {
   try {
     const [openlistVersion, rcloneVersion] = await Promise.all([
-      TauriAPI.getBinaryVersion('openlist'),
-      TauriAPI.getBinaryVersion('rclone')
+      TauriAPI.bin.version('openlist'),
+      TauriAPI.bin.version('rclone')
     ])
     currentVersions.value.openlist = openlistVersion || 'unknown'
     currentVersions.value.rclone = rcloneVersion || 'unknown'
@@ -111,7 +111,7 @@ const getCurrentVersions = async () => {
 
 const fetchOpenListVersions = async () => {
   try {
-    return await TauriAPI.getAvailableVersions('openlist')
+    return await TauriAPI.bin.availableVersions('openlist')
   } catch (error) {
     console.error('Failed to fetch OpenList versions:', error)
     return []
@@ -120,7 +120,7 @@ const fetchOpenListVersions = async () => {
 
 const fetchRcloneVersions = async () => {
   try {
-    const versions = await TauriAPI.getAvailableVersions('rclone')
+    const versions = await TauriAPI.bin.availableVersions('rclone')
     return versions
   } catch (error) {
     return []
@@ -145,7 +145,7 @@ const refreshVersions = async () => {
 const updateVersion = async (type: 'openlist' | 'rclone') => {
   loading.value[type] = true
   try {
-    const result = await TauriAPI.updateToolVersion(type, selectedVersions.value[type])
+    const result = await TauriAPI.bin.updateVersion(type, selectedVersions.value[type])
 
     currentVersions.value[type] = selectedVersions.value[type]
     selectedVersions.value[type] = ''

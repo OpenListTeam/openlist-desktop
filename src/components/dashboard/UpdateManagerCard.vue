@@ -139,8 +139,8 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
 import { TauriAPI } from '../../api/tauri'
-import type { UpdateCheck, UpdateAsset, DownloadProgress } from '../../types'
 import Card from '../ui/Card.vue'
+import { formatBytes } from '@/utils/formatters'
 import { RefreshCw, Download, ArrowRight, CheckCircle, AlertCircle, Info, CheckCircle2 } from 'lucide-vue-next'
 
 interface Props {
@@ -186,7 +186,7 @@ const checkForUpdates = async () => {
     checking.value = true
     error.value = null
 
-    const result = await TauriAPI.checkForUpdates()
+    const result = await TauriAPI.updater.check()
     updateCheck.value = result
 
     if (result.hasUpdate && result.assets.length > 0) {
@@ -222,7 +222,7 @@ const downloadAndInstall = async () => {
     installationStatus.value = t('update.startingDownload')
     installationStatusType.value = 'info'
 
-    const filePath = await TauriAPI.downloadUpdate(selectedAsset.value.url, selectedAsset.value.name)
+    const filePath = await TauriAPI.updater.download(selectedAsset.value.url, selectedAsset.value.name)
 
     downloading.value = false
     installing.value = true
@@ -230,7 +230,7 @@ const downloadAndInstall = async () => {
     installationStatus.value = t('update.installingUpdate')
     installationStatusType.value = 'info'
 
-    await TauriAPI.installUpdateAndRestart(filePath)
+    await TauriAPI.updater.installAndRestart(filePath)
   } catch (err: any) {
     console.error('Failed to download/install update:', err)
     downloading.value = false
@@ -246,7 +246,7 @@ const toggleAutoCheck = async () => {
 
   try {
     settingsLoading.value = true
-    await TauriAPI.setAutoCheckEnabled(autoCheckEnabled.value)
+    await TauriAPI.updater.setAutoCheck(autoCheckEnabled.value)
   } catch (err: any) {
     console.error('Failed to update auto-check setting:', err)
     autoCheckEnabled.value = !autoCheckEnabled.value
@@ -296,14 +296,6 @@ const formatReleaseNotes = (notes: string) => {
     .replace(/\n/g, '<br>')
 }
 
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
 const formatSpeed = (bytesPerSecond: number) => {
   if (bytesPerSecond === 0) return '0 B/s'
   const k = 1024
@@ -321,10 +313,10 @@ onMounted(async () => {
       }
     }
     appStore.clearUpdateStatus()
-    currentVersion.value = await TauriAPI.getCurrentVersion()
-    autoCheckEnabled.value = await TauriAPI.isAutoCheckEnabled()
+    currentVersion.value = await TauriAPI.updater.currentVersion()
+    autoCheckEnabled.value = await TauriAPI.updater.isAutoCheckEnabled()
     try {
-      backgroundUpdateUnlisten = await TauriAPI.listenToBackgroundUpdateAvailable(updateInfo => {
+      backgroundUpdateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
         console.log('Background update available:', updateInfo)
         backgroundUpdateCheck.value = updateInfo
       })
@@ -334,7 +326,7 @@ onMounted(async () => {
     }
 
     try {
-      downloadProgressUnlisten = await TauriAPI.listenToDownloadProgress(progress => {
+      downloadProgressUnlisten = await TauriAPI.updater.onDownloadProgress(progress => {
         downloadProgress.value = progress
       })
     } catch (err) {
@@ -343,7 +335,7 @@ onMounted(async () => {
     }
 
     try {
-      installStartedUnlisten = await TauriAPI.listenToUpdateInstallStarted(() => {
+      installStartedUnlisten = await TauriAPI.updater.onInstallStarted(() => {
         installing.value = true
         installationStatus.value = t('update.installingUpdate')
         installationStatusType.value = 'info'
@@ -354,7 +346,7 @@ onMounted(async () => {
     }
 
     try {
-      installErrorUnlisten = await TauriAPI.listenToUpdateInstallError(errorMsg => {
+      installErrorUnlisten = await TauriAPI.updater.onInstallError(errorMsg => {
         installing.value = false
         error.value = errorMsg
         installationStatus.value = t('update.installError')
@@ -366,7 +358,7 @@ onMounted(async () => {
     }
 
     try {
-      appRestartingUnlisten = await TauriAPI.listenToAppRestarting(() => {
+      appRestartingUnlisten = await TauriAPI.updater.onAppRestarting(() => {
         installationStatus.value = t('update.restartingApp')
         installationStatusType.value = 'success'
       })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslation } from '../composables/useI18n'
 import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, Play } from 'lucide-vue-next'
@@ -8,6 +8,7 @@ import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 
 const store = useAppStore()
 const route = useRoute()
+const router = useRouter()
 const { t } = useTranslation()
 const isSaving = ref(false)
 const message = ref('')
@@ -124,6 +125,11 @@ const handleSave = async () => {
       message.value = ''
     }, 3000)
   }
+}
+
+async function startTutorial() {
+  router.push({ name: 'Dashboard' })
+  store.startTutorial()
 }
 
 const handleReset = async () => {
@@ -347,7 +353,7 @@ const handleReset = async () => {
 
           <div class="form-grid">
             <div class="form-group">
-              <button @click="store.startTutorial()" class="tutorial-btn" type="button">
+              <button @click="startTutorial" class="tutorial-btn" type="button">
                 <Play :size="16" />
                 {{ t('settings.app.tutorial.restart') }}
               </button>

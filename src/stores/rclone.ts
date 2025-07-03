@@ -15,12 +15,12 @@ export const useRcloneStore = defineStore('rclone', () => {
   async function startRcloneBackend() {
     try {
       loading.value = true
-      const isRunning = await TauriAPI.isRcloneRunning()
+      const isRunning = await TauriAPI.rclone.backend.isRunning()
       if (isRunning) {
         serviceRunning.value = true
         return true
       }
-      const result = await TauriAPI.createAndStartRcloneBackend()
+      const result = await TauriAPI.rclone.backend.createAndStart()
       if (result) {
         serviceRunning.value = true
       }
@@ -35,7 +35,7 @@ export const useRcloneStore = defineStore('rclone', () => {
 
   async function getRcloneProcessId() {
     try {
-      const processList = await TauriAPI.getProcessList()
+      const processList = await TauriAPI.process.list()
       const findRcloneBackend = processList.find(p => p.config?.name === 'single_rclone_backend_process')
       if (findRcloneBackend) {
         return findRcloneBackend.id
@@ -54,7 +54,7 @@ export const useRcloneStore = defineStore('rclone', () => {
         serviceRunning.value = false
         return
       }
-      const result = await TauriAPI.stopProcess(id)
+      const result = await TauriAPI.process.stop(id)
       if (result) {
         serviceRunning.value = false
       }
@@ -69,7 +69,7 @@ export const useRcloneStore = defineStore('rclone', () => {
 
   async function checkRcloneBackendStatus() {
     try {
-      const isRunning = await TauriAPI.getRcloneBackendStatus()
+      const isRunning = await TauriAPI.rclone.backend.isRunning()
       serviceRunning.value = isRunning
       return isRunning
     } catch (err: any) {

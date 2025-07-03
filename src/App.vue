@@ -54,7 +54,7 @@ onMounted(async () => {
     await updateTrayMenu(store.openlistCoreStatus.running)
 
     try {
-      updateUnlisten = await TauriAPI.listenToBackgroundUpdateAvailable(updateInfo => {
+      updateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
         console.log('Global update listener: Update available', updateInfo)
         store.setUpdateAvailable(true, updateInfo)
       })

@@ -14,7 +14,7 @@ use cmd::custom_updater::{
     is_auto_check_enabled, restart_app, set_auto_check_enabled,
 };
 use cmd::http_api::{
-    get_process_list, restart_process, start_process, stop_process, update_process,
+    delete_process, get_process_list, restart_process, start_process, stop_process, update_process,
 };
 use cmd::logs::{clear_logs, get_admin_password, get_logs};
 use cmd::openlist_core::{create_openlist_core_process, get_openlist_core_status};
@@ -102,6 +102,7 @@ pub fn run() {
                 .expect("no main window")
                 .set_focus();
         }))
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
@@ -117,6 +118,7 @@ pub fn run() {
             stop_process,
             restart_process,
             update_process,
+            delete_process,
             create_openlist_core_process,
             get_openlist_core_status,
             get_rclone_backend_status,

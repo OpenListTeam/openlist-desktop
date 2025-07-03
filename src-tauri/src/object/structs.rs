@@ -14,13 +14,6 @@ pub struct ServiceStatus {
 }
 
 #[derive(Debug, Serialize, Clone)]
-pub struct MountStatus {
-    pub mounted: bool,
-    pub mount_path: Option<String>,
-    pub remote_name: Option<String>,
-}
-
-#[derive(Debug, Serialize, Clone)]
 pub struct FileItem {
     pub name: String,
     pub path: String,

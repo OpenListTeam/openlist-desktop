@@ -11,7 +11,7 @@ export const useTray = () => {
   let unlistenTrayActions: (() => void) | null = null
   const updateTrayMenu = async (serviceRunning: boolean) => {
     try {
-      await TauriAPI.updateTrayMenuDelayed(serviceRunning)
+      await TauriAPI.tray.update(serviceRunning)
     } catch (error) {
       console.error('Failed to update tray menu:', error)
     }
@@ -50,9 +50,9 @@ export const useTray = () => {
   }
   const initTrayListeners = async () => {
     try {
-      unlistenTrayActions = await TauriAPI.listenToTrayServiceActions(handleTrayServiceAction)
+      unlistenTrayActions = await TauriAPI.tray.listen(handleTrayServiceAction)
 
-      await TauriAPI.forceUpdateTrayMenu(store.openlistCoreStatus.running)
+      await TauriAPI.tray.forceUpdate(store.openlistCoreStatus.running)
       console.log('Tray listeners initialized and menu updated')
     } catch (error) {
       console.error('Failed to initialize tray listeners:', error)

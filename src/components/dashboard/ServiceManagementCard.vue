@@ -164,7 +164,7 @@ const statusIcon = computed(() => {
 
 const checkServiceStatus = async () => {
   try {
-    const status = await TauriAPI.checkServiceStatus()
+    const status = await TauriAPI.service.status()
     serviceStatus.value = status as 'not-installed' | 'installed' | 'running' | 'error' | 'stopped'
     return status
   } catch (error) {
@@ -178,7 +178,7 @@ const installService = async () => {
   actionLoading.value = true
   currentAction.value = 'install'
   try {
-    const result = await TauriAPI.installOpenListService()
+    const result = await TauriAPI.service.install()
     if (!result) {
       throw new Error('Installation failed')
     }
@@ -188,7 +188,7 @@ const installService = async () => {
       throw new Error('Service installation did not complete successfully')
     }
     try {
-      await TauriAPI.createAndStartRcloneBackend()
+      await TauriAPI.rclone.backend.createAndStart()
       await rcloneStore.checkRcloneBackendStatus()
     } catch (stopError) {
       console.warn('Failed to stop service during installation:', stopError)
@@ -205,7 +205,7 @@ const startService = async () => {
   actionLoading.value = true
   currentAction.value = 'start'
   try {
-    const result = await TauriAPI.startOpenListService()
+    const result = await TauriAPI.service.start()
     if (!result) {
       throw new Error('Service start failed')
     }
@@ -223,7 +223,7 @@ const stopService = async () => {
   actionLoading.value = true
   currentAction.value = 'stop'
   try {
-    const result = await TauriAPI.stopOpenListService()
+    const result = await TauriAPI.service.stop()
     if (!result) {
       throw new Error('Service stop failed')
     }
@@ -241,7 +241,7 @@ const uninstallService = async () => {
   actionLoading.value = true
   currentAction.value = 'uninstall'
   try {
-    const result = await TauriAPI.uninstallOpenListService()
+    const result = await TauriAPI.service.uninstall()
     if (!result) {
       throw new Error('Uninstallation failed')
     }

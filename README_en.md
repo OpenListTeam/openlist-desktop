@@ -13,19 +13,19 @@
   [English](./README.md) | [中文](./README_zh.md)
 </div>
 
-## WIP
+## Attention
 
-This project is still under development and will soon release version 1.0.
+This project is in the early development stage, with a version number of 0.x.x. There may be significant changes and unstable features.
 
 ## 🔍 Overview
 
-OpenList Desktop is a powerful cross-platform desktop application that provides a user-friendly interface for managing OpenList services and integrating cloud storage through Rclone. Built with modern web technologies and Rust, it offers seamless file management, cloud storage mounting, and service monitoring capabilities.
+OpenList Desktop is a powerful cross-platform desktop application that provides a user-friendly interface for managing OpenList services and performing local mounts via Rclone.
 
 The application serves as a comprehensive solution for:
 
 - Managing OpenList file management services
 - Mounting and managing cloud storage (WebDAV)
-- Monitoring service health and performance
+- Monitoring service status and uptime
 - Providing system tray integration for background operations
 
 ## ✨ Features
@@ -33,7 +33,7 @@ The application serves as a comprehensive solution for:
 ### 🚀 Core Features
 
 - **OpenList Service Management**: Start, stop, and monitor OpenList core services
-- **Cloud Storage Integration**: Mount via Rclone
+- **Local Mounting**: Mount via Rclone to the local file system
 - **Real-time Monitoring**: Track service status, uptime, and performance metrics
 - **Process Management**: Advanced process control with auto-restart capabilities
 - **System Tray**: Background operation with system tray notifications
@@ -46,14 +46,6 @@ The application serves as a comprehensive solution for:
 - **Update Management**: Automatic update checking and installation
 - **Auto-startup**: Configure applications to start with system boot
 
-### 🎨 User Experience
-
-- **Modern UI**: Clean, intuitive interface built with Vue.js
-- **Multi-language**: Support for English and Chinese
-- **Responsive Design**: Optimized for various screen sizes
-- **Keyboard Shortcuts**: Efficient navigation with keyboard shortcuts
-- **Tutorial System**: Built-in tutorial for new users
-
 ## 📸 Screenshots
 
 ### Home Dashboard
@@ -62,31 +54,21 @@ The application serves as a comprehensive solution for:
 
 The main dashboard provides a comprehensive overview of your OpenList Desktop environment with:
 
-- Service status monitoring
+- OpenList backend status monitoring
 - Quick action buttons for common tasks
-- Version management and update notifications
+- OpenList and Rclone version management
 - Service management controls
 
 ### Mount Management
 
 ![Mount Management](./screenshot/mountpage.png)
 
-Manage your cloud storage connections with ease:
+Easily perform local mounts:
 
 - Add and configure storage remotes
 - Mount/unmount cloud storage
 - Monitor mount status and statistics
 - Configure auto-mounting options
-
-### Settings Configuration
-
-![Settings](./screenshot/settingpage.png)
-
-Comprehensive settings management:
-
-- OpenList service configuration
-- Startup and automation preferences
-- Theme and language selection
 
 ### Log Monitoring
 
@@ -98,13 +80,22 @@ Keep track of system operations:
 - Filter logs by source and level
 - Export and clear log functionality
 
+### Settings Configuration
+
+![Settings](./screenshot/settingpage.png)
+
+Comprehensive settings management:
+
+- OpenList core configuration
+- Startup and automation preferences
+- Theme and language selection
+
 ### Update Management
 
 ![Update Management](./screenshot/update.png)
 
 Stay up-to-date with the latest versions:
 
-- Check for OpenList and Rclone updates
 - Download and install updates
 - Version history and changelog
 - Automatic update scheduling
@@ -121,9 +112,9 @@ Stay up-to-date with the latest versions:
 
 Download the latest release from [GitHub Releases](https://github.com/OpenListTeam/openlist-desktop/releases):
 
-- **Windows**: `OpenList-Desktop_x.x.x_x64_en-US.msi`
-- **macOS**: `OpenList-Desktop_x.x.x_x64.dmg`
-- **Linux**: `OpenList-Desktop_x.x.x_amd64.AppImage`
+- **Windows**：`OpenList-Desktop_x.x.x_{arch}-setup.exe`
+- **macOS**：`OpenList-Desktop_x.x.x_{arch}.dmg`
+- **Linux**：`OpenList-Desktop_x.x.x_{arch}.deb` or `OpenList-Desktop_x.x.x_{arch}.rpm`
 
 #### 2. Build from Source
 
@@ -133,14 +124,14 @@ git clone https://github.com/OpenListTeam/openlist-desktop.git
 cd openlist-desktop
 
 # Install dependencies
-npm install
+yarn install
 
 # Prepare development environment
-npm run prepare-dev
+yarn run prebuild:dev
 
 # Build the application
-npm run build
-npm run tauri build
+yarn run build
+yarn run tauri build
 ```
 
 ### Installation Steps
@@ -174,6 +165,8 @@ npm run tauri build
 
 ### First Launch
 
+> **Note**: It is recommended to run OpenList Desktop with Administrator privileges on first launch to ensure proper service installation and configuration.
+
 1. **Initial Setup**: On first launch, the application will guide you through initial configuration
 2. **Service Installation**: Install the OpenList service when prompted
 3. **Storage Configuration**: Configure your first cloud storage connection
@@ -184,7 +177,7 @@ npm run tauri build
 #### Starting Services
 
 ```bash
-Dashboard → Service Management → Start OpenList Service
+Dashboard → Quick Actions → Start OpenList Core
 Dashboard → Quick Actions → Start Rclone Backend
 ```
 

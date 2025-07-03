@@ -27,7 +27,7 @@ const navigationItems = computed(() => [
 
 const openLink = async (url: string) => {
   try {
-    await TauriAPI.openUrl(url)
+    await TauriAPI.files.url(url)
   } catch (error) {
     console.error('Failed to open link:', error)
     window.open(url, '_blank')

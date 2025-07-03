@@ -13,19 +13,19 @@
   [English](./README_en.md) | [中文](./README.md)
 </div>
 
-## WIP
+## 注意
 
-该项目仍在开发中，预计很快发布1.0版本。
+该项目处于早期开发阶段，版本号0.x.x阶段，可能会有重大更改和不稳定的功能。
 
 ## 🔍 概述
 
-OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理 OpenList 服务和通过 Rclone 集成云存储提供用户友好的界面。使用现代 Web 技术和 Rust 构建，提供无缝的文件管理、云存储挂载和服务监控功能。
+OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理 OpenList 服务和通过 Rclone 进行本地挂载提供用户友好的界面。
 
 该应用程序是一个全面的解决方案，用于：
 
 - 管理 OpenList 文件管理服务
 - 挂载和管理云存储（WebDAV）
-- 监控服务健康和性能
+- 监控服务运行状态
 - 提供系统托盘集成以进行后台操作
 
 ## ✨ 功能特性
@@ -33,7 +33,7 @@ OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理
 ### 🚀 核心功能
 
 - **OpenList 服务管理**：启动、停止和监控 OpenList 核心服务
-- **云存储集成**：通过 Rclone 挂载
+- **本地挂载**：通过 Rclone 挂载至本地文件系统
 - **实时监控**：跟踪服务状态、运行时间和性能指标
 - **进程管理**：具有自动重启功能的高级进程控制
 - **系统托盘**：带系统托盘通知的后台操作
@@ -46,14 +46,6 @@ OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理
 - **更新管理**：自动更新检查和安装
 - **自动启动**：配置应用程序与系统一起启动
 
-### 🎨 用户体验
-
-- **现代 UI**：使用 Vue.js 构建的简洁、直观界面
-- **多语言**：支持英语和中文
-- **响应式设计**：针对各种屏幕尺寸优化
-- **键盘快捷键**：使用键盘快捷键高效导航
-- **教程系统**：为新用户提供内置教程
-
 ## 📸 应用截图
 
 ### 主页仪表板
@@ -62,31 +54,21 @@ OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理
 
 主仪表板提供您的 OpenList Desktop 环境的全面概览：
 
-- 服务状态监控
+- OpenList 后台状态监控
 - 常见任务的快速操作按钮
-- 版本管理和更新通知
+- OpenList和 Rclone 版本管理
 - 服务管理控制
 
 ### 挂载管理
 
 ![挂载管理](./screenshot/mountpage.png)
 
-轻松管理您的云存储连接：
+轻松进行本地挂载：
 
 - 添加和配置存储远程
 - 挂载/卸载云存储
 - 监控挂载状态和统计信息
 - 配置自动挂载选项
-
-### 设置配置
-
-![设置](./screenshot/settingpage.png)
-
-全面的设置管理：
-
-- OpenList 服务配置
-- 启动和自动化偏好设置
-- 主题和语言选择
 
 ### 日志监控
 
@@ -98,13 +80,22 @@ OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理
 - 按来源和级别过滤日志
 - 导出和清除日志功能
 
+### 设置配置
+
+![设置](./screenshot/settingpage.png)
+
+全面的设置管理：
+
+- OpenList 核心配置
+- 启动和自动化偏好设置
+- 主题和语言选择
+
 ### 更新管理
 
 ![更新管理](./screenshot/update.png)
 
 保持最新版本：
 
-- 检查 OpenList 和 Rclone 更新
 - 下载和安装更新
 - 版本历史和更新日志
 - 自动更新计划
@@ -121,9 +112,9 @@ OpenList Desktop 是一个功能强大的跨平台桌面应用程序，为管理
 
 从 [GitHub Releases](https://github.com/OpenListTeam/openlist-desktop/releases) 下载最新版本：
 
-- **Windows**：`OpenList-Desktop_x.x.x_x64_en-US.msi`
-- **macOS**：`OpenList-Desktop_x.x.x_x64.dmg`
-- **Linux**：`OpenList-Desktop_x.x.x_amd64.AppImage`
+- **Windows**：`OpenList-Desktop_x.x.x_{arch}-setup.exe`
+- **macOS**：`OpenList-Desktop_x.x.x_{arch}.dmg`
+- **Linux**：`OpenList-Desktop_x.x.x_{arch}.deb` 或 `OpenList-Desktop_x.x.x_{arch}.rpm`
 
 #### 2. 从源码构建
 
@@ -133,14 +124,14 @@ git clone https://github.com/OpenListTeam/openlist-desktop.git
 cd openlist-desktop
 
 # 安装依赖
-npm install
+yarn install
 
 # 准备开发环境
-npm run prepare-dev
+yarn run prebuild:dev
 
 # 构建应用程序
-npm run build
-npm run tauri build
+yarn run build
+yarn run tauri build
 ```
 
 ### 安装步骤
@@ -163,6 +154,7 @@ npm run tauri build
 
 1. 下载 `.deb` 或 `.rpm` 包
 2. 使用包管理器安装：
+
    ```bash
    sudo dpkg -i OpenList-Desktop_x.x.x_amd64.deb
    # 或者
@@ -172,6 +164,8 @@ npm run tauri build
 ## 🚀 使用说明
 
 ### 首次启动
+
+> **Note**: 建议在首次启动时通过管理员权限运行 OpenList Desktop，以确保正确安装和配置服务。
 
 1. **初始设置**：首次启动时，应用程序将指导您完成初始配置
 2. **服务安装**：在提示时安装 OpenList 服务
@@ -183,7 +177,7 @@ npm run tauri build
 #### 启动服务
 
 ```bash
-仪表板 → 服务管理 → 启动 OpenList 服务
+仪表板 → 快速操作 → 启动 OpenList 核心
 仪表板 → 快速操作 → 启动 Rclone 后端
 ```
 

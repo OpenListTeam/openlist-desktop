@@ -2,291 +2,122 @@ import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { appDataDir, join } from '@tauri-apps/api/path'
 
-import {
-  DownloadProgress,
-  FileItem,
-  MergedSettings,
-  OpenListCoreStatus,
-  ProcessConfig,
-  ProcessStatus,
-  RcloneMountInfo,
-  RcloneWebdavConfig,
-  TauriResponse,
-  UpdateCheck
-} from '../types'
+const call = <T>(cmd: string, args?: any): Promise<T> => invoke(cmd, args)
 
 export class TauriAPI {
-  // openlist desktop service management
-  static async checkServiceStatus(): Promise<string> {
-    return await invoke('check_service_status')
+  // --- service management ---
+  static service = {
+    status: (): Promise<string> => call('check_service_status'),
+    install: (): Promise<boolean> => call('install_service'),
+    uninstall: (): Promise<boolean> => call('uninstall_service'),
+    start: (): Promise<boolean> => call('start_service'),
+    stop: (): Promise<boolean> => call('stop_service')
   }
 
-  static async installOpenListService(): Promise<boolean> {
-    return await invoke('install_service')
+  // --- process management ---
+  static process = {
+    list: (): Promise<ProcessStatus[]> => call('get_process_list'),
+    start: (id: string): Promise<boolean> => call('start_process', { id }),
+    stop: (id: string): Promise<boolean> => call('stop_process', { id }),
+    restart: (id: string): Promise<boolean> => call('restart_process', { id }),
+    update: (id: string, cfg: Partial<ProcessConfig>): Promise<boolean> =>
+      call('update_process', { id, updateConfig: cfg }),
+    delete: (id: string): Promise<boolean> => call('delete_process', { id })
   }
 
-  static async uninstallOpenListService(): Promise<boolean> {
-    return await invoke('uninstall_service')
+  // --- OpenList Core management ---
+  static core = {
+    create: (autoStart: boolean): Promise<ProcessConfig> => call('create_openlist_core_process', { autoStart }),
+    getStatus: (): Promise<OpenListCoreStatus> => call('get_openlist_core_status')
   }
 
-  static async startOpenListService(): Promise<boolean> {
-    return await invoke('start_service')
+  // --- Rclone management ---
+  static rclone = {
+    backend: {
+      create: (): Promise<boolean> => call('create_rclone_backend_process'),
+      createAndStart: (): Promise<ProcessConfig> => call('create_and_start_rclone_backend'),
+      isRunning: (): Promise<boolean> => call('get_rclone_backend_status')
+    },
+    remotes: {
+      list: (): Promise<string[]> => call('rclone_list_remotes'),
+      create: (name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> =>
+        call('rclone_create_remote', { name, type, config }),
+      update: (name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> =>
+        call('rclone_update_remote', { name, type, config }),
+      delete: (name: string): Promise<boolean> => call('rclone_delete_remote', { name }),
+      listConfig: (t: string): Promise<IRemoteConfig> => call('rclone_list_config', { remoteType: t })
+    },
+    mounts: {
+      list: (): Promise<RcloneMountInfo[]> => call('get_mount_info_list'),
+      check: (mp: string): Promise<boolean> => call('check_mount_status', { mountPoint: mp }),
+      createProcess: (cfg: ProcessConfig): Promise<ProcessConfig> =>
+        call('create_rclone_mount_remote_process', { config: cfg })
+    }
   }
 
-  static async stopOpenListService(): Promise<boolean> {
-    return await invoke('stop_service')
+  // -- File management ---
+  static files = {
+    list: (path: string): Promise<FileItem[]> => call('list_files', { path }),
+    open: (path: string): Promise<boolean> => call('open_file', { path }),
+    folder: (path: string): Promise<boolean> => call('open_folder', { path }),
+    url: (path: string): Promise<boolean> => call('open_url', { path })
   }
 
-  // http API management
-  static async getProcessList(): Promise<ProcessStatus[]> {
-    return await invoke('get_process_list')
+  // --- Settings management ---
+  static settings = {
+    load: (): Promise<MergedSettings | null> => call('load_settings'),
+    save: (s: MergedSettings): Promise<boolean> => call('save_settings', { settings: s }),
+    saveWithUpdatePort: (s: MergedSettings): Promise<boolean> =>
+      call('save_settings_with_update_port', { settings: s }),
+    reset: (): Promise<MergedSettings | null> => call('reset_settings')
   }
 
-  static async startProcess(id: string): Promise<boolean> {
-    return await invoke('start_process', { id })
+  // --- Logs management ---
+  static logs = {
+    get: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<string[]> =>
+      call('get_logs', { source: src }),
+    clear: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<boolean> =>
+      call('clear_logs', { source: src }),
+    adminPassword: (): Promise<string> => call('get_admin_password')
   }
 
-  static async stopProcess(id: string): Promise<boolean> {
-    return await invoke('stop_process', { id })
+  // --- Binary management ---
+  static bin = {
+    version: (name: 'openlist' | 'rclone'): Promise<string> => call('get_binary_version', { binaryName: name }),
+    availableVersions: (tool: string): Promise<string[]> => call('get_available_versions', { tool }),
+    updateVersion: (tool: string, version: string): Promise<string> => call('update_tool_version', { tool, version })
   }
 
-  static async restartProcess(id: string): Promise<boolean> {
-    return await invoke('restart_process', { id })
+  // --- Utility functions ---
+  static util = {
+    defaultDataDir: (): Promise<string> => appDataDir().then(d => join(d, 'openlist-desktop')),
+    defaultConfig: (): Promise<string> => appDataDir().then(d => join(d, 'openlist-desktop', 'rclone.conf')),
+    selectDirectory: (title: string): Promise<string | null> => call('select_directory', { title })
   }
 
-  static async updateProcess(id: string, config: Partial<ProcessConfig>): Promise<boolean> {
-    return await invoke('update_process', { id, updateConfig: config })
+  // --- Tray management ---
+  static tray = {
+    update: (r: boolean): Promise<void> => call('update_tray_menu', { serviceRunning: r }),
+    updateDelayed: (r: boolean): Promise<void> => call('update_tray_menu_delayed', { serviceRunning: r }),
+    forceUpdate: (r: boolean): Promise<void> => call('force_update_tray_menu', { serviceRunning: r }),
+    listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string))
   }
 
-  // OpenList Core management
-
-  static async createOpenListCore(autoStart: boolean): Promise<ProcessConfig> {
-    return await invoke('create_openlist_core_process', { autoStart })
-  }
-
-  static async getOpenListCoreStatus(): Promise<OpenListCoreStatus> {
-    return await invoke('get_openlist_core_status')
-  }
-
-  // Rclone management
-
-  static async createRcloneBackend(): Promise<boolean> {
-    return await invoke('create_rclone_backend_process')
-  }
-
-  static async createAndStartRcloneBackend(): Promise<ProcessConfig> {
-    return await invoke('create_and_start_rclone_backend')
-  }
-
-  static async isRcloneRunning(): Promise<boolean> {
-    return await invoke('get_rclone_backend_status')
-  }
-
-  static async createRemoteConfig(name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> {
-    return await invoke('rclone_create_remote', { name, type, config })
-  }
-
-  static async updateRemoteConfig(name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> {
-    return await invoke('rclone_update_remote', { name, type, config })
-  }
-
-  static async deleteRemoteConfig(name: string): Promise<boolean> {
-    return await invoke('rclone_delete_remote', { name })
-  }
-
-  static async listRcloneRemotes(): Promise<string[]> {
-    return await invoke('rclone_list_remotes')
-  }
-
-  static async listRcloneMounts(): Promise<any> {
-    return await invoke('rclone_list_mounts')
-  }
-
-  static async checkMountStatus(mountPoint: string): Promise<boolean> {
-    return await invoke('check_mount_status', { mountPoint })
-  }
-
-  static async getMountInfoList(): Promise<RcloneMountInfo[]> {
-    return await invoke('get_mount_info_list')
-  }
-
-  static async rcloneListConfig(remoteType: string): Promise<IRemoteConfig> {
-    return await invoke('rclone_list_config', { remoteType })
-  }
-
-  static async getRcloneBackendStatus(): Promise<boolean> {
-    return await invoke('get_rclone_backend_status')
-  }
-
-  static async createRcloneMountRemoteProcess(config: ProcessConfig): Promise<ProcessConfig> {
-    return await invoke('create_rclone_mount_remote_process', { config })
-  }
-
-  // File operations
-  static async listFiles(path: string): Promise<FileItem[]> {
-    return await invoke('list_files', { path })
-  }
-
-  static async openFile(path: string): Promise<boolean> {
-    return await invoke('open_file', { path })
-  }
-
-  static async openFolder(path: string): Promise<boolean> {
-    return await invoke('open_folder', { path })
-  }
-
-  static async openUrl(path: string): Promise<boolean> {
-    return await invoke('open_url', { path })
-  }
-
-  // Settings management
-  static async loadSettings(): Promise<MergedSettings | null> {
-    return await invoke('load_settings')
-  }
-
-  static async saveSettings(settings: MergedSettings): Promise<boolean> {
-    return await invoke('save_settings', { settings })
-  }
-
-  static async saveSettingsWithUpdatePort(settings: MergedSettings): Promise<boolean> {
-    return await invoke('save_settings_with_update_port', { settings })
-  }
-
-  static async resetSettings(): Promise<MergedSettings | null> {
-    return await invoke('reset_settings')
-  }
-  // Logs
-  static async getLogs(source?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<string[]> {
-    return await invoke('get_logs', { source })
-  }
-
-  static async clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<boolean> {
-    return await invoke('clear_logs', { source })
-  }
-
-  static async getAdminPassword(): Promise<string> {
-    return await invoke('get_admin_password')
-  }
-
-  // Binary management
-
-  static async getBinaryVersion(binary_name: 'openlist' | 'rclone'): Promise<string> {
-    return await invoke('get_binary_version', { binaryName: binary_name })
-  }
-
-  static async selectDirectory(title: string): Promise<string | null> {
-    return await invoke('select_directory', { title })
-  }
-
-  static async getAvailableVersions(tool: string): Promise<string[]> {
-    return await invoke('get_available_versions', { tool })
-  }
-
-  static async updateToolVersion(tool: string, version: string): Promise<string> {
-    return await invoke('update_tool_version', { tool, version })
-  }
-
-  static async getAppVersion(): Promise<TauriResponse<string>> {
-    return await invoke('get_app_version')
-  }
-
-  // Utility methods
-  static async getDefaultDataDir(): Promise<string> {
-    const appData = await appDataDir()
-    return await join(appData, 'openlist-desktop')
-  }
-
-  static async getDefaultConfigPath(): Promise<string> {
-    const appData = await appDataDir()
-    return await join(appData, 'openlist-desktop', 'rclone.conf')
-  }
-
-  // Auto-startup management
-  static async enableAutoStart(): Promise<TauriResponse<void>> {
-    return await invoke('enable_auto_start')
-  }
-
-  static async disableAutoStart(): Promise<TauriResponse<void>> {
-    return await invoke('disable_auto_start')
-  }
-
-  static async isAutoStartEnabled(): Promise<TauriResponse<boolean>> {
-    return await invoke('is_auto_start_enabled')
-  }
-
-  // System tray management
-  static async updateTrayMenu(serviceRunning: boolean): Promise<void> {
-    return await invoke('update_tray_menu', { serviceRunning })
-  }
-
-  static async updateTrayMenuDelayed(serviceRunning: boolean): Promise<void> {
-    return await invoke('update_tray_menu_delayed', { serviceRunning })
-  }
-
-  static async forceUpdateTrayMenu(serviceRunning: boolean): Promise<void> {
-    return await invoke('force_update_tray_menu', { serviceRunning })
-  }
-
-  // Tray event listeners
-  static async listenToTrayServiceActions(callback: (action: string) => void) {
-    return await listen('tray-core-action', event => {
-      callback(event.payload as string)
-    })
-  }
-
-  // Custom Updater management
-  static async checkForUpdates(): Promise<UpdateCheck> {
-    return await invoke('check_for_updates')
-  }
-
-  static async downloadUpdate(assetUrl: string, assetName: string): Promise<string> {
-    return await invoke('download_update', { assetUrl, assetName })
-  }
-
-  static async installUpdateAndRestart(installerPath: string): Promise<void> {
-    return await invoke('install_update_and_restart', { installerPath })
-  }
-
-  static async getCurrentVersion(): Promise<string> {
-    return await invoke('get_current_version')
-  }
-
-  static async setAutoCheckEnabled(enabled: boolean): Promise<void> {
-    return await invoke('set_auto_check_enabled', { enabled })
-  }
-
-  static async isAutoCheckEnabled(): Promise<boolean> {
-    return await invoke('is_auto_check_enabled')
-  }
-
-  // Update event listeners
-  static async listenToBackgroundUpdateAvailable(callback: (updateCheck: UpdateCheck) => void) {
-    return await listen('background-update-available', event => {
-      callback(event.payload as UpdateCheck)
-    })
-  }
-
-  static async listenToDownloadProgress(callback: (progress: DownloadProgress) => void) {
-    return await listen('download-progress', event => {
-      callback(event.payload as DownloadProgress)
-    })
-  }
-
-  static async listenToUpdateInstallStarted(callback: () => void) {
-    return await listen('update-install-started', () => {
-      callback()
-    })
-  }
-
-  static async listenToUpdateInstallError(callback: (error: string) => void) {
-    return await listen('update-install-error', event => {
-      callback(event.payload as string)
-    })
-  }
-
-  static async listenToAppRestarting(callback: () => void) {
-    return await listen('app-restarting', () => {
-      callback()
-    })
+  // --- Update management ---
+  static updater = {
+    check: (): Promise<UpdateCheck> => call('check_for_updates'),
+    download: (url: string, name: string): Promise<string> =>
+      call('download_update', { assetUrl: url, assetName: name }),
+    installAndRestart: (path: string): Promise<void> => call('install_update_and_restart', { installerPath: path }),
+    currentVersion: (): Promise<string> => call('get_current_version'),
+    setAutoCheck: (e: boolean): Promise<void> => call('set_auto_check_enabled', { enabled: e }),
+    isAutoCheckEnabled: (): Promise<boolean> => call('is_auto_check_enabled'),
+    onBackgroundUpdate: (cb: (u: UpdateCheck) => void) =>
+      listen('background-update-available', e => cb(e.payload as UpdateCheck)),
+    onDownloadProgress: (cb: (p: DownloadProgress) => void) =>
+      listen('download-progress', e => cb(e.payload as DownloadProgress)),
+    onInstallStarted: (cb: () => void) => listen('update-install-started', () => cb()),
+    onInstallError: (cb: (err: string) => void) => listen('update-install-error', e => cb(e.payload as string)),
+    onAppRestarting: (cb: () => void) => listen('app-restarting', () => cb())
   }
 }
