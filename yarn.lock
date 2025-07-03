@@ -920,12 +920,19 @@
   dependencies:
     undici-types "~7.8.0"
 
-"@types/node@^22.0.0", "@types/node@^22.9.3":
+"@types/node@^22.0.0":
   version "22.15.32"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.15.32.tgz#c301cc2275b535a5e54bb81d516b1d2e9afe06e5"
   integrity sha512-3jigKqgSjsH6gYZv2nEsqdXfZqIFGAV36XYYjf9KGZ3PSG+IhLecqPnI310RvjutyMwifE2hhhNEklOUrvx/wA==
   dependencies:
     undici-types "~6.21.0"
+
+"@types/node@^24.0.0":
+  version "24.0.10"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-24.0.10.tgz#f65a169779bf0d70203183a1890be7bee8ca2ddb"
+  integrity sha512-ENHwaH+JIRTDIEEbDK6QSQntAYGtbvdDXnMXnZaZ6k13Du1dPMmprkEHIL7ok2Wl2aZevetwTAb5S+7yIF+enA==
+  dependencies:
+    undici-types "~7.8.0"
 
 "@types/normalize-package-data@^2.4.4":
   version "2.4.4"
