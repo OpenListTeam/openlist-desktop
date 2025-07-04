@@ -81,27 +81,76 @@ const getServiceInfo = exeName => {
   }
 }
 
-// SimpleSC.dll
-const resolvePlugin = async () => {
+const resolvePlugins = async () => {
+  const pluginDir = path.join(process.env.APPDATA, 'Local/NSIS')
+  await fs.mkdir(pluginDir, { recursive: true })
+  await resolveSimpleServicePlugin(pluginDir)
+  await resolveAccessControlPlugin(pluginDir)
+}
+
+const resolveSimpleServicePlugin = async pluginDir => {
   const url = 'https://nsis.sourceforge.io/mediawiki/images/e/ef/NSIS_Simple_Service_Plugin_Unicode_1.30.zip'
   const TEMP_DIR = path.join(cwd, 'temp')
   const tempDir = path.join(TEMP_DIR, 'SimpleSC')
   const tempZip = path.join(tempDir, 'NSIS_Simple_Service_Plugin_Unicode_1.30.zip')
   const tempDll = path.join(tempDir, 'SimpleSC.dll')
-  const pluginDir = path.join(process.env.APPDATA, 'Local/NSIS')
   const pluginPath = path.join(pluginDir, 'SimpleSC.dll')
-  await fs.mkdir(pluginDir, { recursive: true })
+
   await fs.mkdir(tempDir, { recursive: true })
   if (fs.existsSync(pluginPath)) return
+
   try {
     if (!fs.existsSync(tempZip)) {
       await downloadFile(url, tempZip)
     }
     const zip = new AdmZip(tempZip)
-
     zip.extractAllTo(tempDir, true)
     await fsp.cp(tempDll, pluginPath, { recursive: true, force: true })
     console.log(`SimpleSC.dll copied to ${pluginPath}`)
+  } finally {
+    await fsp.rm(tempDir, { recursive: true, force: true })
+  }
+}
+
+const resolveAccessControlPlugin = async pluginDir => {
+  const url = 'https://nsis.sourceforge.io/mediawiki/images/4/4a/AccessControl.zip'
+  const TEMP_DIR = path.join(cwd, 'temp')
+  const tempDir = path.join(TEMP_DIR, 'AccessControl')
+  const tempZip = path.join(tempDir, 'AccessControl.zip')
+  const tempDll = path.join(tempDir, 'Plugins', 'AccessControl.dll')
+  const pluginPath = path.join(pluginDir, 'Plugins', 'x86-unicode', 'AccessControl.dll')
+  const pluginPathB = path.join(pluginDir, 'AccessControl.dll')
+
+  await fs.mkdir(tempDir, { recursive: true })
+  if (fs.existsSync(pluginPath)) return
+
+  try {
+    if (!fs.existsSync(tempZip)) {
+      await downloadFile(url, tempZip)
+    }
+    const zip = new AdmZip(tempZip)
+    zip.extractAllTo(tempDir, true)
+
+    let sourcePath = tempDll
+    if (!fs.existsSync(sourcePath)) {
+      const altPaths = [
+        path.join(tempDir, 'AccessControl.dll'),
+        path.join(tempDir, 'Plugins', 'i386-unicode', 'AccessControl.dll')
+      ]
+      for (const altPath of altPaths) {
+        if (fs.existsSync(altPath)) {
+          sourcePath = altPath
+          break
+        }
+      }
+    }
+    if (fs.existsSync(sourcePath)) {
+      await fsp.cp(sourcePath, pluginPath, { recursive: true, force: true })
+      await fsp.cp(sourcePath, pluginPathB, { recursive: true, force: true })
+      console.log(`AccessControl.dll copied to ${pluginPath}`)
+    } else {
+      console.warn('AccessControl.dll not found in the extracted archive')
+    }
   } finally {
     await fsp.rm(tempDir, { recursive: true, force: true })
   }
@@ -200,7 +249,7 @@ async function main() {
     )
   })
   if (isWin) {
-    await resolvePlugin()
+    await resolvePlugins()
   }
   await resolveService(getServiceInfo('install-openlist-service'))
   await resolveService(getServiceInfo('openlist-desktop-service'))

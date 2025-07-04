@@ -401,17 +401,7 @@ Function .onInit
   ${If} $INSTDIR == ""
     ; Set default install location
     !if "${INSTALLMODE}" == "perMachine"
-      ${If} ${RunningX64}
-        !if "${ARCH}" == "x64"
-          StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCTNAME}"
-        !else if "${ARCH}" == "arm64"
-          StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCTNAME}"
-        !else
-          StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
-        !endif
-      ${Else}
-        StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
-      ${EndIf}
+      StrCpy $INSTDIR "D:\Program\${PRODUCTNAME}"
     !else if "${INSTALLMODE}" == "currentUser"
       StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
     !endif
@@ -499,6 +489,34 @@ FunctionEnd
           MessageBox MB_OK|MB_ICONSTOP "Check Service Status Error ($0)"
     ${EndIf}
   ${EndIf}
+!macroend
+
+!macro SetDirectoryPermissions
+  DetailPrint "Setting permissions for installation directory..."
+  !if "${INSTALLMODE}" == "currentUser"
+    AccessControl::GrantOnFile "$INSTDIR" "(S-1-5-32-545)" "FullAccess"
+    Pop $R0
+    ${If} $R0 == "ok"
+      DetailPrint "Successfully granted permissions to Users group"
+    ${Else}
+      DetailPrint "Warning: Failed to set permissions - $R0"
+    ${EndIf}
+  !else
+    AccessControl::GrantOnFile "$INSTDIR" "(S-1-5-32-545)" "FullAccess"
+    Pop $R0
+    ${If} $R0 == "ok"
+      DetailPrint "Successfully granted permissions to Users group"
+    ${Else}
+      DetailPrint "Warning: Failed to set permissions - $R0"
+    ${EndIf}
+        AccessControl::GrantOnFile "$INSTDIR" "(S-1-5-11)" "FullAccess"
+    Pop $R0
+    ${If} $R0 == "ok"
+      DetailPrint "Successfully granted permissions to Authenticated Users"
+    ${Else}
+      DetailPrint "Warning: Failed to set permissions for Authenticated Users - $R0"
+    ${EndIf}
+  !endif
 !macroend
 
 !macro RemoveOpenListService
@@ -730,6 +748,8 @@ Section Install
   SetOutPath $INSTDIR
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllOpenListProcesses
+
+  !insertmacro SetDirectoryPermissions
 
   DetailPrint "Cleaning auto-launch registry entries..."
 
