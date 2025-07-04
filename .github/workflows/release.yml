@@ -573,7 +573,7 @@ jobs:
           path: arm-artifacts
 
       - name: Update release with ARM artifacts
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.changelog.outputs.tag }}
           name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
