@@ -401,7 +401,11 @@ Function .onInit
   ${If} $INSTDIR == ""
     ; Set default install location
     !if "${INSTALLMODE}" == "perMachine"
-      StrCpy $INSTDIR "D:\Program\${PRODUCTNAME}"
+      IfFileExists "D:\" 0 +3
+        StrCpy $INSTDIR "D:\Program\${PRODUCTNAME}"
+        Goto instdir_set
+      StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
+      instdir_set:
     !else if "${INSTALLMODE}" == "currentUser"
       StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
     !endif
